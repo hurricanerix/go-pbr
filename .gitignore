@@ -13,6 +13,8 @@
 !*.go
 !go.sum
 !go.mod
+!*.frag
+!*.vert
 
 !README.md
 !LICENSE
