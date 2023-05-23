@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/draw"
 	_ "image/png"
+	"io"
 	"log"
 	"os"
 	"runtime"
@@ -51,8 +52,11 @@ func main() {
 	slversion := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
 	fmt.Println("OpenGL SL version", slversion)
 
+	vertexShader := readFile("shaders/pbr.vert")
+	fragmentShader := readFile("shaders/pbr.frag")
+
 	// Configure the vertex and fragment shaders
-	program, err := newProgram(vertexShader, fragmentShader)
+	program, err := newProgram(string(vertexShader), string(fragmentShader))
 	if err != nil {
 		panic(err)
 	}
@@ -63,13 +67,21 @@ func main() {
 	projectionUniform := gl.GetUniformLocation(program, gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 
-	camera := mgl32.LookAtV(mgl32.Vec3{3, 3, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	camera := mgl32.Vec3{3, 3, 3}
 	cameraUniform := gl.GetUniformLocation(program, gl.Str("camera\x00"))
-	gl.UniformMatrix4fv(cameraUniform, 1, false, &camera[0])
+	gl.Uniform3fv(cameraUniform, 1, &camera[0])
+
+	view := mgl32.LookAtV(camera, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	viewUniform := gl.GetUniformLocation(program, gl.Str("view\x00"))
+	gl.UniformMatrix4fv(viewUniform, 1, false, &view[0])
 
 	model := mgl32.Ident4()
 	modelUniform := gl.GetUniformLocation(program, gl.Str("model\x00"))
 	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+
+	light := mgl32.Vec3{2, 0, 2}
+	lightUniform := gl.GetUniformLocation(program, gl.Str("light\x00"))
+	gl.Uniform3fv(lightUniform, 1, &light[0])
 
 	textureDiffuseUniform := gl.GetUniformLocation(program, gl.Str("texSampler\x00"))
 	gl.Uniform1i(textureDiffuseUniform, 0)
@@ -265,51 +277,6 @@ func newTexture(file string, loc uint32) (uint32, error) {
 	return texture, nil
 }
 
-var vertexShader = `
-#version 410
-
-uniform mat4 projection;
-uniform mat4 camera;
-uniform mat4 model;
-
-in vec3 vert;
-in vec2 vertTexCoord;
-
-out vec2 fragTexCoord;
-
-void main() {
-    fragTexCoord = vertTexCoord;
-    gl_Position = projection * camera * model * vec4(vert, 1);
-}
-` + "\x00"
-
-var fragmentShader = `
-#version 410
-
-uniform sampler2D texSampler;
-uniform sampler2D armSampler; // R/G/B -> AO/Rough/Metal
-uniform sampler2D dispSampler;
-uniform sampler2D norSampler;
-
-in vec2 fragTexCoord;
-
-out vec4 outputColor;
-
-#define AO (0)
-#define ROUGHNESS (1)
-#define METALIC (2)
-
-void main() {
-	vec4 tex = texture(texSampler, fragTexCoord);
-	vec4 arm = texture(armSampler, fragTexCoord);
-
-    outputColor = vec4(tex.r * arm[AO],
-                       tex.g * arm[AO],
-                       tex.b * arm[AO],
-					   1.0);
-}
-` + "\x00"
-
 var cubeVertices = []float32{
 	//  X, Y, Z, U, V
 	// Bottom
@@ -359,4 +326,33 @@ var cubeVertices = []float32{
 	1.0, -1.0, 1.0, 1.0, 1.0,
 	1.0, 1.0, -1.0, 0.0, 0.0,
 	1.0, 1.0, 1.0, 0.0, 1.0,
+}
+
+func readFile(filename string) []byte {
+	f, err := os.Open(filename)
+	defer f.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	fs, err := f.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	result := make([]byte, fs.Size())
+
+	buf := make([]byte, 4)
+	current := 0
+	var n int
+	for {
+		n, err = f.Read(buf)
+		if err == io.EOF {
+			break
+		}
+		copy(result[current:current+n], buf[:n])
+		current += n
+	}
+
+	return result
 }
