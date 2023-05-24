@@ -2,19 +2,33 @@ package main
 
 import (
 	"fmt"
-	"image"
-	"image/draw"
 	_ "image/png"
-	"io"
 	"log"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+
+	"go-pbr/opengl"
 )
+
+//import (
+//	"fmt"
+//	"image"
+//	"image/draw"
+//	_ "image/png"
+//	"io"
+//	"log"
+//	"os"
+//	"runtime"
+//	"strings"
+//
+//	"github.com/go-gl/gl/v4.1-core/gl"
+//	"github.com/go-gl/glfw/v3.3/glfw"
+//	"github.com/go-gl/mathgl/mgl32"
+//)
 
 const windowWidth = 800
 const windowHeight = 600
@@ -41,82 +55,90 @@ func main() {
 	}
 	window.MakeContextCurrent()
 
-	// Initialize Glow
+	// TODO: abstract START
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
-
 	version := gl.GoStr(gl.GetString(gl.VERSION))
 	fmt.Println("OpenGL version", version)
-
 	slversion := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
 	fmt.Println("OpenGL SL version", slversion)
+	// TODO: abstract STOP
 
-	vertexShader := readFile("shaders/pbr.vert")
-	fragmentShader := readFile("shaders/pbr.frag")
-
-	// Configure the vertex and fragment shaders
-	program, err := newProgram(string(vertexShader), string(fragmentShader))
-	if err != nil {
-		panic(err)
+	prog := opengl.Program{}
+	if f, err := os.Open("shaders/basic.vert"); err == nil {
+		defer f.Close()
+		prog.CompileShader(f, opengl.VertexShader)
 	}
 
-	gl.UseProgram(program)
+	if f, err := os.Open("shaders/basic.frag"); err == nil {
+		defer f.Close()
+		prog.CompileShader(f, opengl.FragmentShader)
+	}
+
+	prog.Link()
+	if err := prog.Validate(); err != nil {
+		panic(err)
+	}
+	prog.Use()
+
+	//prog.SetUniform() // ModelViewMatrix, matrix
+	//prog.SetUniform() // LightPosition, 1.0, 1.0, 1.0
 
 	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 10.0)
-	projectionUniform := gl.GetUniformLocation(program, gl.Str("projection\x00"))
+	projectionUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("projection\x00"))
 	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
 
 	camera := mgl32.Vec3{3, 3, 3}
-	cameraUniform := gl.GetUniformLocation(program, gl.Str("camera\x00"))
+	cameraUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("camera\x00"))
 	gl.Uniform3fv(cameraUniform, 1, &camera[0])
 
 	view := mgl32.LookAtV(camera, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	viewUniform := gl.GetUniformLocation(program, gl.Str("view\x00"))
+	viewUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("view\x00"))
 	gl.UniformMatrix4fv(viewUniform, 1, false, &view[0])
 
 	model := mgl32.Ident4()
-	modelUniform := gl.GetUniformLocation(program, gl.Str("model\x00"))
+	modelUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("model\x00"))
 	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
 	light := mgl32.Vec3{2, 0, 2}
-	lightUniform := gl.GetUniformLocation(program, gl.Str("light\x00"))
+	lightUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("light\x00"))
 	gl.Uniform3fv(lightUniform, 1, &light[0])
 
-	textureDiffuseUniform := gl.GetUniformLocation(program, gl.Str("texSampler\x00"))
+	textureDiffuseUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("texSampler\x00"))
 	gl.Uniform1i(textureDiffuseUniform, 0)
 
-	texutreArmUniform := gl.GetUniformLocation(program, gl.Str("armSampler\x00"))
+	texutreArmUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("armSampler\x00"))
 	gl.Uniform1i(texutreArmUniform, 1)
 
-	textureDispDiffuseUniform := gl.GetUniformLocation(program, gl.Str("dispSampler\x00"))
+	textureDispDiffuseUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("dispSampler\x00"))
 	gl.Uniform1i(textureDispDiffuseUniform, 2)
 
-	textureNorDiffuseUniform := gl.GetUniformLocation(program, gl.Str("norSampler\x00"))
+	textureNorDiffuseUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("norSampler\x00"))
 	gl.Uniform1i(textureNorDiffuseUniform, 3)
 
-	gl.BindFragDataLocation(program, 0, gl.Str("outputColor\x00"))
+	gl.BindFragDataLocation(prog.Handle(), 0, gl.Str("outputColor\x00"))
 
 	// Load the textureDiffuse
-	textureDiffuse, err := newTexture("textures/concrete_brick_wall_001_diffuse_1k.png", gl.TEXTURE0)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	textureArm, err := newTexture("textures/concrete_brick_wall_001_arm_1k.png", gl.TEXTURE1)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	textureDisp, err := newTexture("textures/concrete_brick_wall_001_disp_1k.png", gl.TEXTURE2)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	textureNor, err := newTexture("textures/concrete_brick_wall_001_nor_gl_1k.png", gl.TEXTURE3)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	//textureDiffuse, err := opengl.NewTexture("textures/concrete_brick_wall_001_diffuse_1k.png", gl.TEXTURE0)
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//
+	//textureArm, err := opengl.NewTexture("textures/concrete_brick_wall_001_arm_1k.png", gl.TEXTURE1)
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//
+	//textureDisp, err := opengl.NewTexture("textures/concrete_brick_wall_001_disp_1k.png", gl.TEXTURE2)
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//
+	//textureNor, err := opengl.NewTexture("textures/concrete_brick_wall_001_nor_gl_1k.png", gl.TEXTURE3)
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
 
 	// Configure the vertex data
 	var vao uint32
@@ -128,11 +150,11 @@ func main() {
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(cubeVertices)*4, gl.Ptr(cubeVertices), gl.STATIC_DRAW)
 
-	vertAttrib := uint32(gl.GetAttribLocation(program, gl.Str("vert\x00")))
+	vertAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
 	gl.VertexAttribPointerWithOffset(vertAttrib, 3, gl.FLOAT, false, 5*4, 0)
 
-	texCoordAttrib := uint32(gl.GetAttribLocation(program, gl.Str("vertTexCoord\x00")))
+	texCoordAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vertTexCoord\x00")))
 	gl.EnableVertexAttribArray(texCoordAttrib)
 	gl.VertexAttribPointerWithOffset(texCoordAttrib, 2, gl.FLOAT, false, 5*4, 3*4)
 
@@ -156,22 +178,22 @@ func main() {
 		model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
 
 		// Render
-		gl.UseProgram(program)
+		prog.Use()
 		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
 		gl.BindVertexArray(vao)
 
-		gl.ActiveTexture(gl.TEXTURE0)
-		gl.BindTexture(gl.TEXTURE_2D, textureDiffuse)
-
-		gl.ActiveTexture(gl.TEXTURE1)
-		gl.BindTexture(gl.TEXTURE_2D, textureArm)
-
-		gl.ActiveTexture(gl.TEXTURE2)
-		gl.BindTexture(gl.TEXTURE_2D, textureDisp)
-
-		gl.ActiveTexture(gl.TEXTURE3)
-		gl.BindTexture(gl.TEXTURE_2D, textureNor)
+		//gl.ActiveTexture(gl.TEXTURE0)
+		//gl.BindTexture(gl.TEXTURE_2D, textureDiffuse)
+		//
+		//gl.ActiveTexture(gl.TEXTURE1)
+		//gl.BindTexture(gl.TEXTURE_2D, textureArm)
+		//
+		//gl.ActiveTexture(gl.TEXTURE2)
+		//gl.BindTexture(gl.TEXTURE_2D, textureDisp)
+		//
+		//gl.ActiveTexture(gl.TEXTURE3)
+		//gl.BindTexture(gl.TEXTURE_2D, textureNor)
 
 		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
 
@@ -179,102 +201,8 @@ func main() {
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}
-}
 
-func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
-	vertexShader, err := compileShader(vertexShaderSource, gl.VERTEX_SHADER)
-	if err != nil {
-		return 0, err
-	}
-
-	fragmentShader, err := compileShader(fragmentShaderSource, gl.FRAGMENT_SHADER)
-	if err != nil {
-		return 0, err
-	}
-
-	program := gl.CreateProgram()
-
-	gl.AttachShader(program, vertexShader)
-	gl.AttachShader(program, fragmentShader)
-	gl.LinkProgram(program)
-
-	var status int32
-	gl.GetProgramiv(program, gl.LINK_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &logLength)
-
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetProgramInfoLog(program, logLength, nil, gl.Str(log))
-
-		return 0, fmt.Errorf("failed to link program: %v", log)
-	}
-
-	gl.DeleteShader(vertexShader)
-	gl.DeleteShader(fragmentShader)
-
-	return program, nil
-}
-
-func compileShader(source string, shaderType uint32) (uint32, error) {
-	shader := gl.CreateShader(shaderType)
-
-	csources, free := gl.Strs(source)
-	gl.ShaderSource(shader, 1, csources, nil)
-	free()
-	gl.CompileShader(shader)
-
-	var status int32
-	gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status)
-	if status == gl.FALSE {
-		var logLength int32
-		gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &logLength)
-
-		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shader, logLength, nil, gl.Str(log))
-
-		return 0, fmt.Errorf("failed to compile %v: %v", source, log)
-	}
-
-	return shader, nil
-}
-
-func newTexture(file string, loc uint32) (uint32, error) {
-	imgFile, err := os.Open(file)
-	if err != nil {
-		return 0, fmt.Errorf("texture %q not found on disk: %v", file, err)
-	}
-	img, _, err := image.Decode(imgFile)
-	if err != nil {
-		return 0, err
-	}
-
-	rgba := image.NewRGBA(img.Bounds())
-	if rgba.Stride != rgba.Rect.Size().X*4 {
-		return 0, fmt.Errorf("unsupported stride")
-	}
-	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-
-	var texture uint32
-	gl.GenTextures(1, &texture)
-	gl.ActiveTexture(loc)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		gl.RGBA,
-		int32(rgba.Rect.Size().X),
-		int32(rgba.Rect.Size().Y),
-		0,
-		gl.RGBA,
-		gl.UNSIGNED_BYTE,
-		gl.Ptr(rgba.Pix))
-
-	return texture, nil
+	prog.Destroy()
 }
 
 var cubeVertices = []float32{
@@ -326,33 +254,4 @@ var cubeVertices = []float32{
 	1.0, -1.0, 1.0, 1.0, 1.0,
 	1.0, 1.0, -1.0, 0.0, 0.0,
 	1.0, 1.0, 1.0, 0.0, 1.0,
-}
-
-func readFile(filename string) []byte {
-	f, err := os.Open(filename)
-	defer f.Close()
-	if err != nil {
-		panic(err)
-	}
-
-	fs, err := f.Stat()
-	if err != nil {
-		panic(err)
-	}
-
-	result := make([]byte, fs.Size())
-
-	buf := make([]byte, 4)
-	current := 0
-	var n int
-	for {
-		n, err = f.Read(buf)
-		if err == io.EOF {
-			break
-		}
-		copy(result[current:current+n], buf[:n])
-		current += n
-	}
-
-	return result
 }
