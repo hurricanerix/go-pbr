@@ -121,20 +121,50 @@ func (p *Program) BindFragDataLocation() {
 
 }
 
-type UniformTypes interface {
-	*mgl32.Mat4 | *mgl32.Vec3 | int32
+func (p Program) SetUniform1i(location string, value int32) {
+	SetUniform(p.handle, location, value)
 }
 
-func (p *Program) SetUniform[T UniformTypes](location string, value T) {
-	l := gl.GetUniformLocation(p.handle, gl.Str(fmt.Sprintf("%s\x00", location)))
+func (p Program) SetUniform1f(location string, value float32) {
+	SetUniform(p.handle, location, value)
+}
+
+func (p Program) SetUniform2fv(location string, value mgl32.Vec2) {
+	SetUniform(p.handle, location, value)
+}
+
+func (p Program) SetUniform3fv(location string, value mgl32.Vec3) {
+	SetUniform(p.handle, location, value)
+}
+
+func (p Program) SetUniform4fv(location string, value mgl32.Vec4) {
+	SetUniform(p.handle, location, value)
+}
+
+func (p Program) SetUniformMatrix4fv(location string, value mgl32.Mat4) {
+	SetUniform(p.handle, location, value)
+}
+
+type UniformTypes interface {
+	int32 | float32 | mgl32.Vec2 | mgl32.Vec3 | mgl32.Vec4 | mgl32.Mat4
+}
+
+func SetUniform[T UniformTypes](handle uint32, location string, value T) {
+	l := gl.GetUniformLocation(handle, gl.Str(fmt.Sprintf("%s\x00", location)))
 
 	switch x := any(value).(type) {
-	case mgl32.Vec3:
-		gl.Uniform3fv(l, 1, &x[0])
-	case mgl32.Mat4:
-		gl.UniformMatrix4fv(l, 1, false, &x[0])
 	case int32:
 		gl.Uniform1i(l, x)
+	case float32:
+		gl.Uniform1f(l, x)
+	case mgl32.Vec2:
+		gl.Uniform2fv(l, 1, &x[0])
+	case mgl32.Vec3:
+		gl.Uniform3fv(l, 1, &x[0])
+	case mgl32.Vec4:
+		gl.Uniform4fv(l, 1, &x[0])
+	case mgl32.Mat4:
+		gl.UniformMatrix4fv(l, 1, false, &x[0])
 	default:
 		panic("unsupported type")
 	}

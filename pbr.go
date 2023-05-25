@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-pbr/obj"
 	_ "image/png"
 	"log"
 	"os"
@@ -30,8 +31,8 @@ import (
 //	"github.com/go-gl/mathgl/mgl32"
 //)
 
-const windowWidth = 800
-const windowHeight = 600
+const windowWidth = 1920
+const windowHeight = 1080
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -78,21 +79,22 @@ func main() {
 
 	prog.Link()
 
-	//prog.Use()
+	if err := prog.Validate(); err != nil {
+		panic(err)
+	}
 
-	prog.SetUniform("projection", &mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 10.0))
-	camera := mgl32.Vec3{3, 3, 3}
-	prog.SetUniform("camera", &camera)
-	view := mgl32.LookAtV(camera, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	prog.SetUniform("view", &view)
+	prog.Use()
+
 	model := mgl32.Ident4()
-	prog.SetUniform("model", &model)
-	light := mgl32.Vec3{2, 0, 2}
-	prog.SetUniform("light", &light)
-	prog.SetUniform("texSampler", 0)
-	prog.SetUniform("armSampler", 1)
-	prog.SetUniform("dispSampler", 2)
-	prog.SetUniform("norSampler", 3)
+
+	prog.SetUniformMatrix4fv("projection", mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 10.0))
+	prog.SetUniformMatrix4fv("view", mgl32.LookAtV(mgl32.Vec3{3, 3, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0}))
+	prog.SetUniformMatrix4fv("model", model)
+	//prog.SetUniform3fv("light", mgl32.Vec3{2, 0, 2})
+	//prog.SetUniform1i("texSampler", 0)
+	//prog.SetUniform1i("armSampler", 1)
+	//prog.SetUniform1i("dispSampler", 2)
+	//prog.SetUniform1i("norSampler", 3)
 
 	gl.BindFragDataLocation(prog.Handle(), 0, gl.Str("FragColor\x00"))
 
@@ -117,6 +119,8 @@ func main() {
 	//	log.Fatalln(err)
 	//}
 
+	o := obj.Obj{}
+
 	// Configure the vertex data
 	var vao uint32
 	gl.GenVertexArrays(1, &vao)
@@ -125,7 +129,7 @@ func main() {
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(cubeVertices)*4, gl.Ptr(cubeVertices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, len(o.Vertices())*4, gl.Ptr(o.Vertices()), gl.STATIC_DRAW)
 
 	vertAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
@@ -138,7 +142,7 @@ func main() {
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
-	gl.ClearColor(6.0, 5.0, 1.0, 1.0)
+	gl.ClearColor(0.1, 0.1, 0.2, 1.0)
 
 	angle := 0.0
 	previousTime := glfw.GetTime()
@@ -155,13 +159,8 @@ func main() {
 		model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
 
 		// Render
-
-		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
+		prog.SetUniformMatrix4fv("model", model)
 		gl.BindVertexArray(vao)
-
-		if err := prog.Validate(); err != nil {
-			panic(err)
-		}
 
 		//gl.ActiveTexture(gl.TEXTURE0)
 		//gl.BindTexture(gl.TEXTURE_2D, textureDiffuse)
@@ -175,8 +174,6 @@ func main() {
 		//gl.ActiveTexture(gl.TEXTURE3)
 		//gl.BindTexture(gl.TEXTURE_2D, textureNor)
 
-		prog.Use()
-
 		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
 
 		// Maintenance
@@ -185,55 +182,4 @@ func main() {
 	}
 
 	prog.Destroy()
-}
-
-var cubeVertices = []float32{
-	//  X, Y, Z, U, V
-	// Bottom
-	-1.0, -1.0, -1.0, 0.0, 0.0,
-	1.0, -1.0, -1.0, 1.0, 0.0,
-	-1.0, -1.0, 1.0, 0.0, 1.0,
-	1.0, -1.0, -1.0, 1.0, 0.0,
-	1.0, -1.0, 1.0, 1.0, 1.0,
-	-1.0, -1.0, 1.0, 0.0, 1.0,
-
-	// Top
-	-1.0, 1.0, -1.0, 0.0, 0.0,
-	-1.0, 1.0, 1.0, 0.0, 1.0,
-	1.0, 1.0, -1.0, 1.0, 0.0,
-	1.0, 1.0, -1.0, 1.0, 0.0,
-	-1.0, 1.0, 1.0, 0.0, 1.0,
-	1.0, 1.0, 1.0, 1.0, 1.0,
-
-	// Front
-	-1.0, -1.0, 1.0, 1.0, 0.0,
-	1.0, -1.0, 1.0, 0.0, 0.0,
-	-1.0, 1.0, 1.0, 1.0, 1.0,
-	1.0, -1.0, 1.0, 0.0, 0.0,
-	1.0, 1.0, 1.0, 0.0, 1.0,
-	-1.0, 1.0, 1.0, 1.0, 1.0,
-
-	// Back
-	-1.0, -1.0, -1.0, 0.0, 0.0,
-	-1.0, 1.0, -1.0, 0.0, 1.0,
-	1.0, -1.0, -1.0, 1.0, 0.0,
-	1.0, -1.0, -1.0, 1.0, 0.0,
-	-1.0, 1.0, -1.0, 0.0, 1.0,
-	1.0, 1.0, -1.0, 1.0, 1.0,
-
-	// Left
-	-1.0, -1.0, 1.0, 0.0, 1.0,
-	-1.0, 1.0, -1.0, 1.0, 0.0,
-	-1.0, -1.0, -1.0, 0.0, 0.0,
-	-1.0, -1.0, 1.0, 0.0, 1.0,
-	-1.0, 1.0, 1.0, 1.0, 1.0,
-	-1.0, 1.0, -1.0, 1.0, 0.0,
-
-	// Right
-	1.0, -1.0, 1.0, 1.0, 1.0,
-	1.0, -1.0, -1.0, 1.0, 0.0,
-	1.0, 1.0, -1.0, 0.0, 0.0,
-	1.0, -1.0, 1.0, 1.0, 1.0,
-	1.0, 1.0, -1.0, 0.0, 0.0,
-	1.0, 1.0, 1.0, 0.0, 1.0,
 }
