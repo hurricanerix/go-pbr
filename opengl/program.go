@@ -2,9 +2,14 @@ package opengl
 
 import (
 	"fmt"
-	"github.com/go-gl/gl/v4.1-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
+	"image"
+	"image/draw"
 	"io"
+	"os"
 	"strings"
+
+	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type ShaderType int
@@ -116,11 +121,23 @@ func (p *Program) BindFragDataLocation() {
 
 }
 
-// Generics?
-func (p *Program) SetUniform() {
-	//camera := mgl32.Vec3{3, 3, 3}
-	//cameraUniform := gl.GetUniformLocation(program, gl.Str("camera\x00"))
-	//gl.Uniform3fv(cameraUniform, 1, &camera[0])
+type UniformTypes interface {
+	*mgl32.Mat4 | *mgl32.Vec3 | int32
+}
+
+func (p *Program) SetUniform[T UniformTypes](location string, value T) {
+	l := gl.GetUniformLocation(p.handle, gl.Str(fmt.Sprintf("%s\x00", location)))
+
+	switch x := any(value).(type) {
+	case mgl32.Vec3:
+		gl.Uniform3fv(l, 1, &x[0])
+	case mgl32.Mat4:
+		gl.UniformMatrix4fv(l, 1, false, &x[0])
+	case int32:
+		gl.Uniform1i(l, x)
+	default:
+		panic("unsupported type")
+	}
 }
 
 func (p *Program) PrintActiveUniforms() {
@@ -161,43 +178,43 @@ func (p *Program) getExtension(name string) string {
 	return ""
 }
 
-//func NewTexture(file string, loc uint32) (uint32, error) {
-//	imgFile, err := os.Open(file)
-//	if err != nil {
-//		return 0, fmt.Errorf("texture %q not found on disk: %v", file, err)
-//	}
-//	img, _, err := image.Decode(imgFile)
-//	if err != nil {
-//		return 0, err
-//	}
-//
-//	rgba := image.NewRGBA(img.Bounds())
-//	if rgba.Stride != rgba.Rect.Size().X*4 {
-//		return 0, fmt.Errorf("unsupported stride")
-//	}
-//	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
-//
-//	var texture uint32
-//	gl.GenTextures(1, &texture)
-//	gl.ActiveTexture(loc)
-//	gl.BindTexture(gl.TEXTURE_2D, texture)
-//	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-//	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-//	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-//	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-//	gl.TexImage2D(
-//		gl.TEXTURE_2D,
-//		0,
-//		gl.RGBA,
-//		int32(rgba.Rect.Size().X),
-//		int32(rgba.Rect.Size().Y),
-//		0,
-//		gl.RGBA,
-//		gl.UNSIGNED_BYTE,
-//		gl.Ptr(rgba.Pix))
-//
-//	return texture, nil
-//}
+func NewTexture(file string, loc uint32) (uint32, error) {
+	imgFile, err := os.Open(file)
+	if err != nil {
+		return 0, fmt.Errorf("texture %q not found on disk: %v", file, err)
+	}
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		return 0, err
+	}
+
+	rgba := image.NewRGBA(img.Bounds())
+	if rgba.Stride != rgba.Rect.Size().X*4 {
+		return 0, fmt.Errorf("unsupported stride")
+	}
+	draw.Draw(rgba, rgba.Bounds(), img, image.Point{0, 0}, draw.Src)
+
+	var texture uint32
+	gl.GenTextures(1, &texture)
+	gl.ActiveTexture(loc)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGBA,
+		int32(rgba.Rect.Size().X),
+		int32(rgba.Rect.Size().Y),
+		0,
+		gl.RGBA,
+		gl.UNSIGNED_BYTE,
+		gl.Ptr(rgba.Pix))
+
+	return texture, nil
+}
 
 func read(f io.Reader) string {
 	result := make([]byte, 0)

@@ -77,47 +77,24 @@ func main() {
 	}
 
 	prog.Link()
-	if err := prog.Validate(); err != nil {
-		panic(err)
-	}
-	prog.Use()
 
-	//prog.SetUniform() // ModelViewMatrix, matrix
-	//prog.SetUniform() // LightPosition, 1.0, 1.0, 1.0
+	//prog.Use()
 
-	projection := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 10.0)
-	projectionUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("projection\x00"))
-	gl.UniformMatrix4fv(projectionUniform, 1, false, &projection[0])
-
+	prog.SetUniform("projection", &mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 10.0))
 	camera := mgl32.Vec3{3, 3, 3}
-	cameraUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("camera\x00"))
-	gl.Uniform3fv(cameraUniform, 1, &camera[0])
-
+	prog.SetUniform("camera", &camera)
 	view := mgl32.LookAtV(camera, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	viewUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("view\x00"))
-	gl.UniformMatrix4fv(viewUniform, 1, false, &view[0])
-
+	prog.SetUniform("view", &view)
 	model := mgl32.Ident4()
-	modelUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("model\x00"))
-	gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
-
+	prog.SetUniform("model", &model)
 	light := mgl32.Vec3{2, 0, 2}
-	lightUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("light\x00"))
-	gl.Uniform3fv(lightUniform, 1, &light[0])
+	prog.SetUniform("light", &light)
+	prog.SetUniform("texSampler", 0)
+	prog.SetUniform("armSampler", 1)
+	prog.SetUniform("dispSampler", 2)
+	prog.SetUniform("norSampler", 3)
 
-	textureDiffuseUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("texSampler\x00"))
-	gl.Uniform1i(textureDiffuseUniform, 0)
-
-	texutreArmUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("armSampler\x00"))
-	gl.Uniform1i(texutreArmUniform, 1)
-
-	textureDispDiffuseUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("dispSampler\x00"))
-	gl.Uniform1i(textureDispDiffuseUniform, 2)
-
-	textureNorDiffuseUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("norSampler\x00"))
-	gl.Uniform1i(textureNorDiffuseUniform, 3)
-
-	gl.BindFragDataLocation(prog.Handle(), 0, gl.Str("outputColor\x00"))
+	gl.BindFragDataLocation(prog.Handle(), 0, gl.Str("FragColor\x00"))
 
 	// Load the textureDiffuse
 	//textureDiffuse, err := opengl.NewTexture("textures/concrete_brick_wall_001_diffuse_1k.png", gl.TEXTURE0)
@@ -154,14 +131,14 @@ func main() {
 	gl.EnableVertexAttribArray(vertAttrib)
 	gl.VertexAttribPointerWithOffset(vertAttrib, 3, gl.FLOAT, false, 5*4, 0)
 
-	texCoordAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vertTexCoord\x00")))
-	gl.EnableVertexAttribArray(texCoordAttrib)
-	gl.VertexAttribPointerWithOffset(texCoordAttrib, 2, gl.FLOAT, false, 5*4, 3*4)
+	//texCoordAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vertTexCoord\x00")))
+	//gl.EnableVertexAttribArray(texCoordAttrib)
+	//gl.VertexAttribPointerWithOffset(texCoordAttrib, 2, gl.FLOAT, false, 5*4, 3*4)
 
 	// Configure global settings
 	gl.Enable(gl.DEPTH_TEST)
 	gl.DepthFunc(gl.LESS)
-	gl.ClearColor(1.0, 1.0, 1.0, 1.0)
+	gl.ClearColor(6.0, 5.0, 1.0, 1.0)
 
 	angle := 0.0
 	previousTime := glfw.GetTime()
@@ -178,10 +155,13 @@ func main() {
 		model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
 
 		// Render
-		prog.Use()
-		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 
+		gl.UniformMatrix4fv(modelUniform, 1, false, &model[0])
 		gl.BindVertexArray(vao)
+
+		if err := prog.Validate(); err != nil {
+			panic(err)
+		}
 
 		//gl.ActiveTexture(gl.TEXTURE0)
 		//gl.BindTexture(gl.TEXTURE_2D, textureDiffuse)
@@ -194,6 +174,8 @@ func main() {
 		//
 		//gl.ActiveTexture(gl.TEXTURE3)
 		//gl.BindTexture(gl.TEXTURE_2D, textureNor)
+
+		prog.Use()
 
 		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
 

@@ -1,13 +1,11 @@
 #version 410
 
-layout (location=0) in vec3 VertexPosition;
-layout (location=1) in vec3 VertexColor;
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
 
-layout (location=0) out vec3 vColor;
+in vec3 vert;
 
-void main()
-{
-    vColor = VertexColor;
-
-    gl_Position = vec4(VertexPosition,1.0);
+void main() {
+    gl_Position = projection * view * model * vec4(vert, 1);
 }
