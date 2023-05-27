@@ -31,8 +31,8 @@ import (
 //	"github.com/go-gl/mathgl/mgl32"
 //)
 
-const windowWidth = 1920
-const windowHeight = 1080
+const windowWidth = 960
+const windowHeight = 540
 
 func init() {
 	// GLFW event handling must run on the main OS thread
@@ -79,6 +79,10 @@ func main() {
 
 	prog.Link()
 
+	o := obj.Obj{}
+
+	o.Bind(prog.Handle())
+
 	if err := prog.Validate(); err != nil {
 		panic(err)
 	}
@@ -119,22 +123,6 @@ func main() {
 	//	log.Fatalln(err)
 	//}
 
-	o := obj.Obj{}
-
-	// Configure the vertex data
-	var vao uint32
-	gl.GenVertexArrays(1, &vao)
-	gl.BindVertexArray(vao)
-
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(o.Vertices())*4, gl.Ptr(o.Vertices()), gl.STATIC_DRAW)
-
-	vertAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vert\x00")))
-	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointerWithOffset(vertAttrib, 3, gl.FLOAT, false, 5*4, 0)
-
 	//texCoordAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vertTexCoord\x00")))
 	//gl.EnableVertexAttribArray(texCoordAttrib)
 	//gl.VertexAttribPointerWithOffset(texCoordAttrib, 2, gl.FLOAT, false, 5*4, 3*4)
@@ -160,7 +148,7 @@ func main() {
 
 		// Render
 		prog.SetUniformMatrix4fv("model", model)
-		gl.BindVertexArray(vao)
+		gl.BindVertexArray(o.Vao)
 
 		//gl.ActiveTexture(gl.TEXTURE0)
 		//gl.BindTexture(gl.TEXTURE_2D, textureDiffuse)

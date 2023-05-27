@@ -78,7 +78,8 @@ func (p *Program) CompileShader(file io.Reader, shaderType ShaderType) {
 		log := strings.Repeat("\x00", int(logLength+1))
 		gl.GetShaderInfoLog(shaderHandle, logLength, nil, gl.Str(log))
 
-		panic(fmt.Errorf("failed to compile %v: %v", source, log))
+		fmt.Printf("----\n%s\n----\n", source)
+		panic(fmt.Errorf("failed to compile %v: %v", shaderType, log))
 	}
 
 	gl.AttachShader(p.handle, shaderHandle)
