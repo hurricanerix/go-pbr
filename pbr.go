@@ -40,6 +40,15 @@ func init() {
 }
 
 func main() {
+
+	var o *obj.Obj
+	if f, err := os.Open("assets/models/cube.obj"); err == nil {
+		defer f.Close()
+		o = obj.Load(f)
+	}
+
+	fmt.Printf("Object Data:\n%s\n", o)
+
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
 	}
@@ -50,7 +59,7 @@ func main() {
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	window, err := glfw.CreateWindow(windowWidth, windowHeight, "Cube", nil, nil)
+	window, err := glfw.CreateWindow(windowWidth, windowHeight, "PBR", nil, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -79,8 +88,6 @@ func main() {
 
 	prog.Link()
 
-	o := obj.Obj{}
-
 	o.Bind(prog.Handle())
 
 	if err := prog.Validate(); err != nil {
@@ -91,52 +98,24 @@ func main() {
 
 	model := mgl32.Ident4()
 
-	prog.SetUniformMatrix4fv("projection", mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 10.0))
+	prog.SetUniformMatrix4fv("projection", mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0))
 	prog.SetUniformMatrix4fv("view", mgl32.LookAtV(mgl32.Vec3{3, 3, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0}))
 	prog.SetUniformMatrix4fv("model", model)
-	//prog.SetUniform3fv("light", mgl32.Vec3{2, 0, 2})
-	//prog.SetUniform1i("texSampler", 0)
-	//prog.SetUniform1i("armSampler", 1)
-	//prog.SetUniform1i("dispSampler", 2)
-	//prog.SetUniform1i("norSampler", 3)
 
 	gl.BindFragDataLocation(prog.Handle(), 0, gl.Str("FragColor\x00"))
 
-	// Load the textureDiffuse
-	//textureDiffuse, err := opengl.NewTexture("textures/concrete_brick_wall_001_diffuse_1k.png", gl.TEXTURE0)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	//
-	//textureArm, err := opengl.NewTexture("textures/concrete_brick_wall_001_arm_1k.png", gl.TEXTURE1)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	//
-	//textureDisp, err := opengl.NewTexture("textures/concrete_brick_wall_001_disp_1k.png", gl.TEXTURE2)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	//
-	//textureNor, err := opengl.NewTexture("textures/concrete_brick_wall_001_nor_gl_1k.png", gl.TEXTURE3)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-
-	//texCoordAttrib := uint32(gl.GetAttribLocation(prog.Handle(), gl.Str("vertTexCoord\x00")))
-	//gl.EnableVertexAttribArray(texCoordAttrib)
-	//gl.VertexAttribPointerWithOffset(texCoordAttrib, 2, gl.FLOAT, false, 5*4, 3*4)
-
 	// Configure global settings
-	gl.Enable(gl.DEPTH_TEST)
-	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.CULL_FACE) //| gl.DEPTH_TEST)
+	gl.FrontFace(gl.CCW)
+	gl.CullFace(gl.BACK)
+	//gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0.1, 0.1, 0.2, 1.0)
 
 	angle := 0.0
 	previousTime := glfw.GetTime()
 
 	for !window.ShouldClose() {
-		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		gl.Clear(gl.COLOR_BUFFER_BIT) // | gl.DEPTH_BUFFER_BIT)
 
 		// Update
 		time := glfw.GetTime()
@@ -150,19 +129,7 @@ func main() {
 		prog.SetUniformMatrix4fv("model", model)
 		gl.BindVertexArray(o.Vao)
 
-		//gl.ActiveTexture(gl.TEXTURE0)
-		//gl.BindTexture(gl.TEXTURE_2D, textureDiffuse)
-		//
-		//gl.ActiveTexture(gl.TEXTURE1)
-		//gl.BindTexture(gl.TEXTURE_2D, textureArm)
-		//
-		//gl.ActiveTexture(gl.TEXTURE2)
-		//gl.BindTexture(gl.TEXTURE_2D, textureDisp)
-		//
-		//gl.ActiveTexture(gl.TEXTURE3)
-		//gl.BindTexture(gl.TEXTURE_2D, textureNor)
-
-		gl.DrawArrays(gl.TRIANGLES, 0, 6*2*3)
+		gl.DrawArrays(gl.TRIANGLES, 0, o.Indices())
 
 		// Maintenance
 		window.SwapBuffers()
