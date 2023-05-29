@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"go-pbr/graphics"
 	"go-pbr/obj"
+	shader2 "go-pbr/opengl/shader"
 	_ "image/png"
 	"log"
 	"os"
@@ -40,14 +42,15 @@ func init() {
 }
 
 func main() {
+	dir := "assets/brick_cube"
 
 	var o *obj.Obj
-	if f, err := os.Open("assets/models/cube.obj"); err == nil {
+	if f, err := os.Open(dir + "/geometry.obj"); err == nil {
 		defer f.Close()
 		o = obj.Load(f)
+	} else {
+		panic(err)
 	}
-
-	fmt.Printf("Object Data:\n%s\n", o)
 
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
@@ -75,16 +78,11 @@ func main() {
 	fmt.Println("OpenGL SL version", slversion)
 	// TODO: abstract STOP
 
-	prog := opengl.Program{}
-	if f, err := os.Open("shaders/basic.vert"); err == nil {
-		defer f.Close()
-		prog.CompileShader(f, opengl.VertexShader)
-	}
+	fmt.Printf("Object Data:\n%s\n", o)
 
-	if f, err := os.Open("shaders/basic.frag"); err == nil {
-		defer f.Close()
-		prog.CompileShader(f, opengl.FragmentShader)
-	}
+	prog := opengl.Program{}
+	prog.CompileShader(shader2.Vert, opengl.VertexShader)
+	prog.CompileShader(shader2.Frag, opengl.FragmentShader)
 
 	prog.Link()
 
@@ -94,13 +92,34 @@ func main() {
 		panic(err)
 	}
 
+	brick := graphics.NewMaterial(prog.Handle(), dir)
+
 	prog.Use()
+
+	ambiantColor := mgl32.Vec3{1.0, 1.0, 1.0}
+	ambiantColorUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("AmbiantColor\x00"))
+	gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
+
+	lightPos := mgl32.Vec3{0.0, 1.0, 1.0}
+	lightPosUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("LightPos\x00"))
+	gl.Uniform3fv(lightPosUniform, 1, &lightPos[0])
+
+	// 255,244,161
+	lightColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
+	lightColorUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("LightColor\x00"))
+	gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
+
+	lightPower := float32(10)
+	lightPowerUniform := gl.GetUniformLocation(prog.Handle(), gl.Str("LightPower\x00"))
+	gl.Uniform1f(lightPowerUniform, lightPower)
+
+	brick.Load()
 
 	model := mgl32.Ident4()
 
-	prog.SetUniformMatrix4fv("projection", mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0))
-	prog.SetUniformMatrix4fv("view", mgl32.LookAtV(mgl32.Vec3{3, 3, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0}))
-	prog.SetUniformMatrix4fv("model", model)
+	prog.SetUniformMatrix4fv("ProjMatrix", mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0))
+	prog.SetUniformMatrix4fv("ViewMatrix", mgl32.LookAtV(mgl32.Vec3{3, 3, 3}, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0}))
+	prog.SetUniformMatrix4fv("ModelMatrix", model)
 
 	gl.BindFragDataLocation(prog.Handle(), 0, gl.Str("FragColor\x00"))
 
@@ -109,7 +128,7 @@ func main() {
 	gl.FrontFace(gl.CCW)
 	gl.CullFace(gl.BACK)
 	//gl.DepthFunc(gl.LESS)
-	gl.ClearColor(0.1, 0.1, 0.2, 1.0)
+	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
 	angle := 0.0
 	previousTime := glfw.GetTime()
@@ -126,8 +145,10 @@ func main() {
 		model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
 
 		// Render
-		prog.SetUniformMatrix4fv("model", model)
+		prog.SetUniformMatrix4fv("ModelMatrix", model)
 		gl.BindVertexArray(o.Vao)
+
+		brick.Use()
 
 		gl.DrawArrays(gl.TRIANGLES, 0, o.Indices())
 
