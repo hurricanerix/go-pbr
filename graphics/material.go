@@ -58,8 +58,7 @@ func (m *Material) Load() {
 }
 
 func (m *Material) Use() {
-
-	ambientStrength := float32(0.1)
+	ambientStrength := float32(0.3)
 	ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
 	gl.Uniform1f(ambientStrengthUniform, ambientStrength)
 

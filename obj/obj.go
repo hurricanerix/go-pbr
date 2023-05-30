@@ -14,8 +14,8 @@ import (
 // TODO: Abstract all the GL calls out of the Obj class.
 
 type Obj struct {
-	Vao uint32
-
+	Vao      uint32
+	Vbo      uint32
 	Vertices []float32
 	Normals  []float32
 	UVs      []float32
@@ -89,15 +89,19 @@ func parseFace(s string) []uint32 {
 	return results
 }
 
-func (o *Obj) Bind(prog uint32) {
+func (o *Obj) Bind() {
 	// Configure the vertex data
 	gl.GenVertexArrays(1, &(o.Vao))
 	gl.BindVertexArray(o.Vao)
 
-	var vbo uint32
-	gl.GenBuffers(1, &vbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.GenBuffers(1, &(o.Vbo))
+	gl.BindBuffer(gl.ARRAY_BUFFER, o.Vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(o.BufferData())*4, gl.Ptr(o.BufferData()), gl.STATIC_DRAW)
+}
+
+func (o Obj) Use(prog uint32) {
+	gl.BindVertexArray(o.Vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, o.Vbo)
 
 	vertAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("Vert\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
@@ -110,8 +114,6 @@ func (o *Obj) Bind(prog uint32) {
 	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("aNormal\x00")))
 	gl.EnableVertexAttribArray(normalAttrib)
 	gl.VertexAttribPointerWithOffset(normalAttrib, 3, gl.FLOAT, false, 8*4, 5*4)
-
-	gl.BindVertexArray(o.Vao)
 }
 
 func (o Obj) BufferData() []float32 {
@@ -130,8 +132,12 @@ func (o Obj) BufferData() []float32 {
 	return result
 }
 
-func (o Obj) Indices() int32 {
+func (o Obj) indices() int32 {
 	return int32(len(o.Faces) / 3)
+}
+
+func (o Obj) Draw() {
+	gl.DrawArrays(gl.TRIANGLES, 0, o.indices())
 }
 
 func (o Obj) String() string {
@@ -141,7 +147,7 @@ func (o Obj) String() string {
 	s.WriteString(fmt.Sprintf("UV Count: %d\n", len(o.UVs)))
 	s.WriteString(fmt.Sprintf("Face Count: %d\n", len(o.Faces)))
 	s.WriteString(fmt.Sprintf("BufferData Count: %d\n", len(o.BufferData())))
-	s.WriteString(fmt.Sprintf("Indicies Count: %d\n", o.Indices()))
+	s.WriteString(fmt.Sprintf("Indicies Count: %d\n", o.indices()))
 	s.WriteString(fmt.Sprintf("BufferData:\n"))
 	bd := o.BufferData()
 	for i := 0; i < len(bd); i = i + 24 {

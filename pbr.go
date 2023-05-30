@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"go-pbr/graphics/opengl"
-	shader2 "go-pbr/graphics/opengl/shader"
+	"go-pbr/graphics/opengl/shader"
 	"log"
 	"os"
 	"runtime"
@@ -24,11 +24,11 @@ func init() {
 }
 
 func main() {
-	dir := "assets/brick_cube"
-	var o *obj.Obj
-	if f, err := os.Open(dir + "/geometry.obj"); err == nil {
+	objectDir := "assets/objects/brick_cube"
+	var cubeMesh *obj.Obj
+	if f, err := os.Open(objectDir + "/geometry.obj"); err == nil {
 		defer f.Close()
-		o = obj.Load(f)
+		cubeMesh = obj.Load(f)
 	} else {
 		panic(err)
 	}
@@ -49,45 +49,46 @@ func main() {
 	}
 	window.MakeContextCurrent()
 
-	renderer := graphics.Renderer{}
+	renderer := graphics.Renderer{
+		WindowWidth:  windowWidth,
+		WindowHeight: windowHeight,
+	}
 	renderer.Init()
+	cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
+	renderer.SetCubemap(cubemapDir)
 
-	fmt.Printf("Object Data:\n%s\n", o)
+	fmt.Printf("Object Data:\n%s\n", cubeMesh)
 
-	prog := opengl.Program{}
-	prog.CompileShader(shader2.Vert, opengl.VertexShader)
-	prog.CompileShader(shader2.Frag, opengl.FragmentShader)
-
-	prog.Link()
-
-	o.Bind(prog.Handle())
-
-	if err := prog.Validate(); err != nil {
+	phongShader := opengl.Program{}
+	phongShader.CompileShader(shader.VertPhong, opengl.VertexShader)
+	phongShader.CompileShader(shader.FragPhong, opengl.FragmentShader)
+	phongShader.Link()
+	cubeMesh.Bind()
+	if err := phongShader.Validate(); err != nil {
 		panic(err)
 	}
+	brickMat := graphics.NewMaterial(phongShader.Handle(), objectDir)
 
-	brick := graphics.NewMaterial(prog.Handle(), dir)
+	//phongShader.Use()
 
-	prog.Use()
-
-	brick.Load()
+	brickMat.Load()
 
 	model := mgl32.Ident4()
 
 	var cameraPos = mgl32.Vec3{0.0, 0.0, 5.0}
 
-	prog.SetUniformMatrix4fv("ProjMatrix", mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0))
-	prog.SetUniformMatrix4fv("ViewMatrix", mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0}))
-	prog.SetUniformMatrix4fv("ModelMatrix", model)
+	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
+	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+	phongShader.SetUniformMatrix4fv("ProjMatrix", projMatrix)
+	phongShader.SetUniformMatrix4fv("ViewMatrix", viewMatrix)
+	phongShader.SetUniformMatrix4fv("ModelMatrix", model)
 
-	prog.SetUniform3fv("ViewPos", cameraPos)
+	phongShader.SetUniform3fv("ViewPos", cameraPos)
 
 	angle := 0.0
 	previousTime := glfw.GetTime()
 
 	for !window.ShouldClose() {
-		renderer.Clear()
-
 		// Update
 		time := glfw.GetTime()
 		elapsed := time - previousTime
@@ -96,20 +97,24 @@ func main() {
 		model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
 
 		// Render
-		prog.SetUniformMatrix4fv("ModelMatrix", model)
+		renderer.Clear(viewMatrix)
 		// for each material {
-		brick.Use()
+		phongShader.Use()
+		phongShader.SetUniformMatrix4fv("ProjMatrix", projMatrix)
+		phongShader.SetUniformMatrix4fv("ViewMatrix", viewMatrix)
+		phongShader.SetUniformMatrix4fv("ModelMatrix", model)
+		phongShader.SetUniform3fv("ViewPos", cameraPos)
 		// for each object using material
-		//o.Bind()
+		cubeMesh.Use(phongShader.Handle())
+		brickMat.Use()
+		cubeMesh.Draw()
 		// } end each object
 		// } end each material
-
-		renderer.Draw(o.Indices())
 
 		// Maintenance
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}
 
-	prog.Destroy()
+	phongShader.Destroy()
 }
