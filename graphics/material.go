@@ -1,11 +1,11 @@
 package graphics
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
+	"go-pbr/graphics/opengl"
 	"log"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-
-	"go-pbr/opengl"
 )
 
 type Material struct {
@@ -54,9 +54,32 @@ func (m *Material) Load() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	gl.BindFragDataLocation(m.Prog, 0, gl.Str("FragColor\x00"))
 }
 
 func (m *Material) Use() {
+
+	ambientStrength := float32(0.1)
+	ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
+	gl.Uniform1f(ambientStrengthUniform, ambientStrength)
+
+	ambiantColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
+	ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
+	gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
+
+	lightPos := mgl32.Vec3{1.2, 1.0, 2.0}
+	lightPosUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPos\x00"))
+	gl.Uniform3fv(lightPosUniform, 1, &lightPos[0])
+
+	// 255,244,161
+	lightColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
+	lightColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightColor\x00"))
+	gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
+
+	lightPower := float32(10)
+	lightPowerUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPower\x00"))
+	gl.Uniform1f(lightPowerUniform, lightPower)
+
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, m.diffuse)
 

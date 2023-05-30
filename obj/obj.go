@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+// TODO: Abstract all the GL calls out of the Obj class.
+
 type Obj struct {
 	Vao uint32
 
@@ -105,24 +107,25 @@ func (o *Obj) Bind(prog uint32) {
 	gl.EnableVertexAttribArray(uvAttrib)
 	gl.VertexAttribPointerWithOffset(uvAttrib, 2, gl.FLOAT, false, 8*4, 3*4)
 
-	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("Normal\x00")))
+	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("aNormal\x00")))
 	gl.EnableVertexAttribArray(normalAttrib)
 	gl.VertexAttribPointerWithOffset(normalAttrib, 3, gl.FLOAT, false, 8*4, 5*4)
 
+	gl.BindVertexArray(o.Vao)
 }
 
 func (o Obj) BufferData() []float32 {
 	vertexCount := len(o.Faces) / 3
 	result := make([]float32, 0, vertexCount*8)
 	for i := 0; i < len(o.Faces); i += 3 {
-		result = append(result, o.Vertices[(o.Faces[i]-1)*3])
-		result = append(result, o.Vertices[(o.Faces[i]-1)*3+1])
-		result = append(result, o.Vertices[(o.Faces[i]-1)*3+2])
+		result = append(result, o.Vertices[(o.Faces[i+0]-1)*3])
+		result = append(result, o.Vertices[(o.Faces[i+0]-1)*3+1])
+		result = append(result, o.Vertices[(o.Faces[i+0]-1)*3+2])
 		result = append(result, o.UVs[(o.Faces[i+1]-1)*2])
 		result = append(result, o.UVs[(o.Faces[i+1]-1)*2+1])
-		result = append(result, o.Normals[(o.Faces[i+2]-1)*2])
-		result = append(result, o.Normals[(o.Faces[i+2]-1)*2+1])
-		result = append(result, o.Normals[(o.Faces[i+2]-1)*2+2])
+		result = append(result, o.Normals[(o.Faces[i+2]-1)*3])
+		result = append(result, o.Normals[(o.Faces[i+2]-1)*3+1])
+		result = append(result, o.Normals[(o.Faces[i+2]-1)*3+2])
 	}
 	return result
 }
@@ -139,5 +142,14 @@ func (o Obj) String() string {
 	s.WriteString(fmt.Sprintf("Face Count: %d\n", len(o.Faces)))
 	s.WriteString(fmt.Sprintf("BufferData Count: %d\n", len(o.BufferData())))
 	s.WriteString(fmt.Sprintf("Indicies Count: %d\n", o.Indices()))
+	s.WriteString(fmt.Sprintf("BufferData:\n"))
+	bd := o.BufferData()
+	for i := 0; i < len(bd); i = i + 24 {
+		s.WriteString("{\n")
+		s.WriteString(fmt.Sprintf("\tpos(%.1f, %.1f, %.1f) uv(%.1f, %.1f) normal(%.1f, %.1f, %.1f)\n", bd[i+0], bd[i+1], bd[i+2], bd[i+3], bd[i+4], bd[i+5], bd[i+6], bd[i+7]))
+		s.WriteString(fmt.Sprintf("\tpos(%.1f, %.1f, %.1f) uv(%.1f, %.1f) normal(%.1f, %.1f, %.1f)\n", bd[i+8], bd[i+9], bd[i+10], bd[i+11], bd[i+12], bd[i+13], bd[i+14], bd[i+15]))
+		s.WriteString(fmt.Sprintf("\tpos(%.1f, %.1f, %.1f) uv(%.1f, %.1f) normal(%.1f, %.1f, %.1f)\n", bd[i+16], bd[i+17], bd[i+18], bd[i+19], bd[i+20], bd[i+21], bd[i+22], bd[i+23]))
+		s.WriteString("}\n")
+	}
 	return s.String()
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/draw"
+	_ "image/png"
 	"io"
 	"os"
 	"strings"
