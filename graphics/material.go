@@ -58,7 +58,7 @@ func (m *Material) Load() {
 }
 
 func (m *Material) Use() {
-	ambientStrength := float32(0.3)
+	ambientStrength := float32(0.1)
 	ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
 	gl.Uniform1f(ambientStrengthUniform, ambientStrength)
 
@@ -67,13 +67,14 @@ func (m *Material) Use() {
 	ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
 	gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
 
-	lightPos := mgl32.Vec3{1.2, 1.0, 2.0}
+	lightPos := mgl32.Vec3{0.0, 0.0, 2.0}
 	lightPosUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPos\x00"))
 	gl.Uniform3fv(lightPosUniform, 1, &lightPos[0])
 
 	// 255,244,161
 	//lightColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
-	lightColor := mgl32.Vec3{0.5568, 0.4039, 0.3529}
+	//lightColor := mgl32.Vec3{0.6568, 0.5039, 0.4529}
+	lightColor := mgl32.Vec3{1, 1, 1}
 	lightColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightColor\x00"))
 	gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
 
