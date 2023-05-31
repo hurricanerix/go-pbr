@@ -128,48 +128,42 @@ func (o *Obj) GenNormalRequirements() {
 			o.UVs[(o.Faces[i+7]-1)*2+1],
 		}
 
-		//glm::vec3 edge1 = pos2 - pos1;
-		//glm::vec3 edge2 = pos3 - pos1;
-		//glm::vec2 deltaUV1 = uv2 - uv1;
-		//glm::vec2 deltaUV2 = uv3 - uv1;
-
-		edge1 := v2.Sub(v1)
-		edge2 := v3.Sub(v1)
-		deltaUV1 := u2.Sub(u1)
-		deltaUV2 := u3.Sub(u1)
-
-		//float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
-		f := 1.0 / (deltaUV1.X()*deltaUV2.Y() - deltaUV2.X()*deltaUV1.Y())
-
-		//tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
-		//tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
-		//tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
-		tangent1 := mgl32.Vec3{
-			f * (deltaUV2.Y()*edge1.X() - deltaUV1.Y()*edge2.X()),
-			f * (deltaUV2.Y()*edge1.Y() - deltaUV1.Y()*edge2.Y()),
-			f * (deltaUV2.Y()*edge1.Z() - deltaUV1.Y()*edge2.Z()),
-		}.Normalize()
-
-		//bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
-		//bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
-		//bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+		tangent1, bitangent1 := calculateTB(v1, v2, v3, u1, u2, u3)
 		o.Tangents = append(o.Tangents, []float32{
 			tangent1[0], tangent1[1], tangent1[2],
 			tangent1[0], tangent1[1], tangent1[2],
 			tangent1[0], tangent1[1], tangent1[2],
 		}...)
 
-		bitangent1 := mgl32.Vec3{
-			f * (-deltaUV2.X()*edge1.X() + deltaUV1.X()*edge2.X()),
-			f * (-deltaUV2.X()*edge1.Y() + deltaUV1.X()*edge2.Y()),
-			f * (-deltaUV2.X()*edge1.Z() + deltaUV1.X()*edge2.Z()),
-		}.Normalize()
 		o.Bitangents = append(o.Tangents, []float32{
 			bitangent1[0], bitangent1[1], bitangent1[2],
 			bitangent1[0], bitangent1[1], bitangent1[2],
 			bitangent1[0], bitangent1[1], bitangent1[2],
 		}...)
 	}
+}
+
+func calculateTB(v1, v2, v3 mgl32.Vec3, u1, u2, u3 mgl32.Vec2) (mgl32.Vec3, mgl32.Vec3) {
+	edge1 := v2.Sub(v1)
+	edge2 := v3.Sub(v1)
+	deltaUV1 := u2.Sub(u1)
+	deltaUV2 := u3.Sub(u1)
+
+	f := 1.0 / (deltaUV1.X()*deltaUV2.Y() - deltaUV2.X()*deltaUV1.Y())
+
+	tangent := mgl32.Vec3{
+		f * (deltaUV2.Y()*edge1.X() - deltaUV1.Y()*edge2.X()),
+		f * (deltaUV2.Y()*edge1.Y() - deltaUV1.Y()*edge2.Y()),
+		f * (deltaUV2.Y()*edge1.Z() - deltaUV1.Y()*edge2.Z()),
+	}.Normalize()
+
+	bitangent := mgl32.Vec3{
+		f * (-deltaUV2.X()*edge1.X() + deltaUV1.X()*edge2.X()),
+		f * (-deltaUV2.X()*edge1.Y() + deltaUV1.X()*edge2.Y()),
+		f * (-deltaUV2.X()*edge1.Z() + deltaUV1.X()*edge2.Z()),
+	}.Normalize()
+
+	return tangent, bitangent
 }
 
 func (o *Obj) Bind() {

@@ -1,6 +1,7 @@
 package obj
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"io"
 	"strings"
 	"testing"
@@ -66,6 +67,47 @@ func TestBufferData(t *testing.T) {
 		obj := Load(tc.input)
 		got := obj.BufferData()
 		assert.Equal(t, tc.want, got, tc.name)
+	}
+}
+
+// func calculateTB(v1, v2, v3 mgl32.Vec3, u1, u2, u3 mgl32.Vec2) (mgl32.Vec3, mgl32.Vec3) {
+func TestCalculateTB(t *testing.T) {
+	tests := []struct {
+		name      string
+		inputPos  [3]mgl32.Vec3
+		inputUV   [3]mgl32.Vec2
+		wantTan   mgl32.Vec3
+		wantBiTan mgl32.Vec3
+	}{
+		{
+			name:      "triangle1",
+			inputPos:  [3]mgl32.Vec3{{-1, 1, 0}, {-1, -1, 0}, {1, -1, 0}},
+			inputUV:   [3]mgl32.Vec2{{0, 1}, {0, 0}, {1, 0}},
+			wantTan:   mgl32.Vec3{1, 0, 0},
+			wantBiTan: mgl32.Vec3{0, 1, 0},
+		},
+		{
+			name:      "triangle2",
+			inputPos:  [3]mgl32.Vec3{{-1, 1, 0}, {1, -1, 0}, {1, 1, 0}},
+			inputUV:   [3]mgl32.Vec2{{0, 1}, {1, 0}, {1, 1}},
+			wantTan:   mgl32.Vec3{1, 0, 0},
+			wantBiTan: mgl32.Vec3{0, 1, 0},
+		},
+		{
+			name:      "triangle3",
+			inputPos:  [3]mgl32.Vec3{{-1, 1, 1}, {-1, -1, -1}, {-1, -1, 1}},
+			inputUV:   [3]mgl32.Vec2{{1, 1}, {0, 0}, {1, 0}},
+			wantTan:   mgl32.Vec3{0, 0, 1},
+			wantBiTan: mgl32.Vec3{0, 1, 0},
+		},
+	}
+
+	for _, tc := range tests {
+		gotTan, _ := calculateTB(
+			tc.inputPos[0], tc.inputPos[1], tc.inputPos[2],
+			tc.inputUV[0], tc.inputUV[1], tc.inputUV[2])
+		assert.Equal(t, tc.wantTan, gotTan, tc.name+" tan")
+		//assert.Equal(t, tc.wantBiTan, gotBiTan, tc.name+" bitan")
 	}
 }
 

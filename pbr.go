@@ -23,7 +23,8 @@ func init() {
 	runtime.LockOSThread()
 }
 
-var angle float64 = 0.0
+var angleX = 0.0
+var angleY = 0.0
 
 func main() {
 	objectDir := "assets/objects/brick_cube"
@@ -78,7 +79,7 @@ func main() {
 
 	model := mgl32.Ident4()
 
-	var cameraPos = mgl32.Vec3{0.0, -2.0, 5.0}
+	var cameraPos = mgl32.Vec3{0.0, 2.0, 5.0}
 
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
@@ -91,12 +92,11 @@ func main() {
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)
 
-	previousTime = glfw.GetTime()
-
 	for !window.ShouldClose() {
 		// Update
-
-		model = mgl32.HomogRotate3D(float32(angle), mgl32.Vec3{0, 1, 0})
+		xrot := mgl32.HomogRotate3D(float32(angleX), mgl32.Vec3{0, 1, 0})
+		//yrot := mgl32.HomogRotate3D(float32(angleY), mgl32.Vec3{1, 0, 0})
+		model = xrot //xrot.Mul4(yrot)
 
 		// Render
 		renderer.Clear(viewMatrix)
@@ -121,26 +121,44 @@ func main() {
 	phongShader.Destroy()
 }
 
-var previousTime float64
+var currentX float64
+var previousX float64
+var currentY float64
+var previousY float64
 var rotateCube bool
 
 func mousePosCallback(w *glfw.Window, xpos float64, ypos float64) {
+	previousX = currentX
+	currentX = xpos
+	previousY = currentY
+	currentY = ypos
+
 	if rotateCube {
-		time := glfw.GetTime()
-		elapsed := time - previousTime
-		previousTime = time
-		angle += xpos * elapsed * .01
+		speed := 0.05
+		dirX := 0.0
+		if previousX < currentX {
+			dirX = 1.0
+		} else if previousX > currentX {
+			dirX = -1.0
+		}
+		angleX += dirX * speed / 2
+
+		dirY := 0.0
+		if previousY < currentY {
+			dirY = 1.0
+		} else if previousY > currentY {
+			dirY = -1.0
+		}
+		angleY += dirY * speed
 	}
 }
 
 func mouseButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 	if button == glfw.MouseButtonLeft && action == glfw.Press {
-		fmt.Printf("Mouse Button Down: %d, %d, %d\n", button, action, mods)
 		rotateCube = true
 	}
 
 	if button == glfw.MouseButtonLeft && action == glfw.Release {
-		fmt.Printf("Mouse Button Up: %d, %d, %d\n", button, action, mods)
 		rotateCube = false
 	}
 }
