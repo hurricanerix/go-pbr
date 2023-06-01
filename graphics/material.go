@@ -1,11 +1,10 @@
 package graphics
 
 import (
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"go-pbr/graphics/opengl"
 	"log"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type Material struct {
@@ -67,8 +66,8 @@ func (m *Material) Use() {
 	ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
 	gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
 
-	lightPos := mgl32.Vec3{0.0, 0.0, 2.0}
-	lightPosUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPos\x00"))
+	lightPos := mgl32.Vec3{0.0, 0.0, -2.0}
+	lightPosUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.LightPosKey))
 	gl.Uniform3fv(lightPosUniform, 1, &lightPos[0])
 
 	// 255,244,161

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"go-pbr/graphics/opengl"
 	"io"
 	"log"
 	"regexp"
@@ -197,24 +198,24 @@ func (o Obj) Use(prog uint32) {
 		stride = 14 * 4
 	}
 
-	vertAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("Vert\x00")))
+	vertAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexPosKey)))
 	gl.EnableVertexAttribArray(vertAttrib)
 	gl.VertexAttribPointerWithOffset(vertAttrib, 3, gl.FLOAT, false, stride, 0)
 
-	uvAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("UV\x00")))
+	uvAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexUVKey)))
 	gl.EnableVertexAttribArray(uvAttrib)
 	gl.VertexAttribPointerWithOffset(uvAttrib, 2, gl.FLOAT, false, stride, 3*4)
 
-	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("aNormal\x00")))
+	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexNormalKey)))
 	gl.EnableVertexAttribArray(normalAttrib)
 	gl.VertexAttribPointerWithOffset(normalAttrib, 3, gl.FLOAT, false, stride, 5*4)
 
 	if len(o.Tangents) > 0 {
-		tangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("aTangent\x00")))
+		tangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexTangentKey)))
 		gl.EnableVertexAttribArray(tangentAttrib)
 		gl.VertexAttribPointerWithOffset(tangentAttrib, 3, gl.FLOAT, false, stride, 8*4)
 
-		bitangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str("aBitangent\x00")))
+		bitangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexBitangentKey)))
 		gl.EnableVertexAttribArray(bitangentAttrib)
 		gl.VertexAttribPointerWithOffset(bitangentAttrib, 3, gl.FLOAT, false, stride, 11*4)
 	}

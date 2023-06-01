@@ -13,8 +13,12 @@
 !*.go
 !go.sum
 !go.mod
-!*.frag
-!*.vert
+
+!/assets/*.vert
+!/assets/*.frag
+!/assets/*.obj
+!/assets/*.png
+
 
 !README.md
 !LICENSE

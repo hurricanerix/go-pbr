@@ -26,9 +26,9 @@ var angleX = 0.0
 var angleY = 0.0
 
 func main() {
-	objectDir := "assets/objects/brick_cube"
+	objectDir := "assets/objects"
 	var cubeMesh *obj.Obj
-	if f, err := os.Open(objectDir + "/geometry.obj"); err == nil {
+	if f, err := os.Open(objectDir + "/plane.obj"); err == nil {
 		defer f.Close()
 		cubeMesh = obj.Load(f)
 		cubeMesh.GenNormalRequirements()
@@ -63,12 +63,12 @@ func main() {
 	fmt.Printf("Object Data:\n%s\n", cubeMesh)
 
 	phongShader := opengl.Program{}
-	if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
+	if f, err := os.Open("assets/shaders/lgl5.4.vert"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.VertexShader)
 	}
 
-	if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
+	if f, err := os.Open("assets/shaders/lgl5.4.frag"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.FragmentShader)
 	}
@@ -78,7 +78,9 @@ func main() {
 	if err := phongShader.Validate(); err != nil {
 		panic(err)
 	}
-	brickMat := graphics.NewMaterial(phongShader.Handle(), objectDir)
+
+	matDir := "assets/materials"
+	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
 
 	//phongShader.Use()
 
@@ -86,13 +88,13 @@ func main() {
 
 	model := mgl32.Ident4()
 
-	var cameraPos = mgl32.Vec3{0.0, 2.0, 5.0}
+	var cameraPos = mgl32.Vec3{0.0, 0.0, 3.0}
 
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
-	phongShader.SetUniformMatrix4fv("ProjMatrix", projMatrix)
-	phongShader.SetUniformMatrix4fv("ViewMatrix", viewMatrix)
-	phongShader.SetUniformMatrix4fv("ModelMatrix", model)
+	phongShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
+	phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
+	phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
 
 	phongShader.SetUniform3fv("ViewPos", cameraPos)
 
@@ -109,10 +111,10 @@ func main() {
 		renderer.Clear(viewMatrix)
 		// for each material {
 		phongShader.Use()
-		phongShader.SetUniformMatrix4fv("Projection", projMatrix)
-		phongShader.SetUniformMatrix4fv("View", viewMatrix)
-		phongShader.SetUniformMatrix4fv("Model", model)
-		phongShader.SetUniform3fv("ViewPos", cameraPos)
+		phongShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
+		phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
+		phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
+		phongShader.SetUniform3fv(opengl.ViewPosKey, cameraPos)
 		// for each object using material
 		cubeMesh.Use(phongShader.Handle())
 		brickMat.Use()

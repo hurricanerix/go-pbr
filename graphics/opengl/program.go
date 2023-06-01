@@ -20,6 +20,26 @@ const (
 	FragmentShader            = gl.FRAGMENT_SHADER
 )
 
+// Uniform Constants
+const (
+	ProjectionMatrixKey = "projection\x00"
+	ViewMatrixKey       = "view\x00"
+	ModelMatrixKey      = "model\x00"
+	LightPosKey         = "lightPos\x00"
+	ViewPosKey          = "viewPos\x00"
+	DiffuseSamplerKey   = "diffuseMap\x00"
+	NormalSamplerKey    = "normalMap\x00"
+)
+
+// Varying Constants
+const (
+	VertexPosKey       = "aPos\x00"
+	VertexNormalKey    = "aNormal\x00"
+	VertexUVKey        = "aTexCoords\x00"
+	VertexTangentKey   = "aTangent\x00"
+	VertexBitangentKey = "aBitangent\x00"
+)
+
 type Program struct {
 	handle uint32
 	linked bool
