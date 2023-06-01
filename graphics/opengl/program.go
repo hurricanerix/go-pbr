@@ -54,12 +54,15 @@ func (p *Program) deleteProgram() {
 
 }
 
-func (p *Program) CompileShader(source string, shaderType ShaderType) {
+func (p *Program) CompileShader(r io.Reader, shaderType ShaderType) {
 	if p.handle <= 0 {
 		p.handle = gl.CreateProgram()
 	}
 
 	shaderHandle := gl.CreateShader(uint32(shaderType))
+
+	source := read(r) + "\x00"
+
 	csources, free := gl.Strs(source)
 	defer free()
 	gl.ShaderSource(shaderHandle, 1, csources, nil)

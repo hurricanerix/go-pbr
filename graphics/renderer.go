@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
 	"go-pbr/graphics/opengl"
-	"go-pbr/graphics/opengl/shader"
 	"go-pbr/obj"
 	"image"
 	"image/draw"
@@ -89,8 +88,15 @@ func (r *Renderer) SetCubemap(path string) {
 	}
 
 	r.cubemapShader = opengl.Program{}
-	r.cubemapShader.CompileShader(shader.VertCubemap, opengl.VertexShader)
-	r.cubemapShader.CompileShader(shader.FragCubemap, opengl.FragmentShader)
+	if f, err := os.Open("assets/shaders/cubemap.vert"); err == nil {
+		defer f.Close()
+		r.cubemapShader.CompileShader(f, opengl.VertexShader)
+	}
+
+	if f, err := os.Open("assets/shaders/cubemap.frag"); err == nil {
+		defer f.Close()
+		r.cubemapShader.CompileShader(f, opengl.FragmentShader)
+	}
 
 	r.cubemapShader.Link()
 

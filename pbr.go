@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"go-pbr/graphics/opengl"
-	"go-pbr/graphics/opengl/shader"
 	"log"
 	"os"
 	"runtime"
@@ -64,8 +63,16 @@ func main() {
 	fmt.Printf("Object Data:\n%s\n", cubeMesh)
 
 	phongShader := opengl.Program{}
-	phongShader.CompileShader(shader.VertPhong, opengl.VertexShader)
-	phongShader.CompileShader(shader.FragPhong, opengl.FragmentShader)
+	if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
+		defer f.Close()
+		phongShader.CompileShader(f, opengl.VertexShader)
+	}
+
+	if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
+		defer f.Close()
+		phongShader.CompileShader(f, opengl.FragmentShader)
+	}
+
 	phongShader.Link()
 	cubeMesh.Bind()
 	if err := phongShader.Validate(); err != nil {
