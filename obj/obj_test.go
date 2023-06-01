@@ -103,11 +103,11 @@ func TestCalculateTB(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		gotTan, _ := calculateTB(
+		gotTan, gotBiTan := calculateTB(
 			tc.inputPos[0], tc.inputPos[1], tc.inputPos[2],
 			tc.inputUV[0], tc.inputUV[1], tc.inputUV[2])
 		assert.Equal(t, tc.wantTan, gotTan, tc.name+" tan")
-		//assert.Equal(t, tc.wantBiTan, gotBiTan, tc.name+" bitan")
+		assert.Equal(t, tc.wantBiTan, gotBiTan, tc.name+" bitan")
 	}
 }
 

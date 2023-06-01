@@ -94,6 +94,9 @@ func parseFace(s string) []uint32 {
 }
 
 func (o *Obj) GenNormalRequirements() {
+	o.Tangents = make([]float32, len(o.Normals))
+	o.Bitangents = make([]float32, len(o.Normals))
+
 	for i := 0; i < len(o.Faces); i += 9 {
 		v1 := mgl32.Vec3{
 			o.Vertices[(o.Faces[i+0]-1)*3],
@@ -129,17 +132,26 @@ func (o *Obj) GenNormalRequirements() {
 		}
 
 		tangent1, bitangent1 := calculateTB(v1, v2, v3, u1, u2, u3)
-		o.Tangents = append(o.Tangents, []float32{
-			tangent1[0], tangent1[1], tangent1[2],
-			tangent1[0], tangent1[1], tangent1[2],
-			tangent1[0], tangent1[1], tangent1[2],
-		}...)
 
-		o.Bitangents = append(o.Tangents, []float32{
-			bitangent1[0], bitangent1[1], bitangent1[2],
-			bitangent1[0], bitangent1[1], bitangent1[2],
-			bitangent1[0], bitangent1[1], bitangent1[2],
-		}...)
+		o.Tangents[(o.Faces[i+2]-1)*3] = tangent1.X()
+		o.Tangents[(o.Faces[i+2]-1)*3+1] = tangent1.Y()
+		o.Tangents[(o.Faces[i+2]-1)*3+2] = tangent1.Z()
+
+		o.Bitangents[(o.Faces[i+2]-1)*3] = bitangent1.X()
+		o.Bitangents[(o.Faces[i+2]-1)*3+1] = bitangent1.Y()
+		o.Bitangents[(o.Faces[i+2]-1)*3+2] = bitangent1.Z()
+
+		//o.Tangents = append(o.Tangents, []float32{
+		//	tangent1[0], tangent1[1], tangent1[2],
+		//	tangent1[0], tangent1[1], tangent1[2],
+		//	tangent1[0], tangent1[1], tangent1[2],
+		//}...)
+
+		//o.Bitangents = append(o.Bitangents, []float32{
+		//	bitangent1[0], bitangent1[1], bitangent1[2],
+		//	bitangent1[0], bitangent1[1], bitangent1[2],
+		//	bitangent1[0], bitangent1[1], bitangent1[2],
+		//}...)
 	}
 }
 
@@ -222,15 +234,15 @@ func (o Obj) BufferData() []float32 {
 		result = append(result, o.Normals[(o.Faces[i+2]-1)*3+2])
 
 		if len(o.Tangents) > 0 {
-			result = append(result, o.Tangents[(o.Faces[i+0]-1)*3])
-			result = append(result, o.Tangents[(o.Faces[i+0]-1)*3+1])
-			result = append(result, o.Tangents[(o.Faces[i+0]-1)*3+2])
+			result = append(result, o.Tangents[(o.Faces[i+2]-1)*3])
+			result = append(result, o.Tangents[(o.Faces[i+2]-1)*3+1])
+			result = append(result, o.Tangents[(o.Faces[i+2]-1)*3+2])
 		}
 
 		if len(o.Bitangents) > 0 {
-			result = append(result, o.Bitangents[(o.Faces[i+0]-1)*3])
-			result = append(result, o.Bitangents[(o.Faces[i+0]-1)*3+1])
-			result = append(result, o.Bitangents[(o.Faces[i+0]-1)*3+2])
+			result = append(result, o.Bitangents[(o.Faces[i+2]-1)*3])
+			result = append(result, o.Bitangents[(o.Faces[i+2]-1)*3+1])
+			result = append(result, o.Bitangents[(o.Faces[i+2]-1)*3+2])
 		}
 	}
 	return result
