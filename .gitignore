@@ -14,10 +14,10 @@
 !go.sum
 !go.mod
 
-!/assets/*.vert
-!/assets/*.frag
-!/assets/*.obj
-!/assets/*.png
+!*.vert
+!*.frag
+!*.obj
+!*.png
 
 
 !README.md
