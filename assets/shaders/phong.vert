@@ -30,6 +30,7 @@ void main() {
     vs_out.FragPos = vec3(Model * vec4(Vert, 1.0));
     vs_out.FragUV = UV;
 
+    // TODO: inverse operation is complicated, calculate this on the CPU and pass it to the shader.
     mat3 normalMatrix = transpose(inverse(mat3(Model)));
     vec3 T = normalize(normalMatrix * aTangent);
     vec3 N = normalize(normalMatrix * aNormal);
