@@ -75,6 +75,8 @@ func main() {
 		phongShader.CompileShader(f, opengl.FragmentShader)
 	}
 
+	// TODO: Move the shader creation into the material initialization so that the shader is always in use
+	//       when the textures are loaded.q
 	phongShader.Link()
 	phongShader.Use() // <- Important to use before loading the material.
 	matDir := "assets/materials"
