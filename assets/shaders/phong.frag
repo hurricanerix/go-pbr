@@ -32,7 +32,7 @@ void main() {
     normal = normalize(normal * 2.0 - 1.0);
 
     // Calculate Ambient Component
-    vec3 ambient = color * AmbientStrength;
+    vec3 ambient = AmbientStrength * color;
 
     // Calculate Diffuse Component
     vec3 lightDir = normalize(fs_in.TangentLightPos - fs_in.TangentFragPos);
@@ -44,7 +44,7 @@ void main() {
     vec3 reflectDir = reflect(-lightDir, normal);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0);
-    vec3 specular = LightColor * spec;
+    vec3 specular = vec3(0.2) * spec;
 
     // Calculate Final Color
     FragColor = vec4(clamp(ambient + diffuse + specular, 0.0, 1.0), alpha);

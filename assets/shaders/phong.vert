@@ -6,7 +6,7 @@ uniform mat4 model;
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
-layout (location = 0) in vec3 aPos; // aPos
+layout (location = 0) in vec3 aPos;
 layout (location = 1) in vec3 aNormal;
 layout (location = 2) in vec2 aTexCoords;
 layout (location = 3) in vec3 aTangent;
@@ -22,11 +22,10 @@ out VS_OUT {
 
 void main() {
     gl_Position = projection * view * model * vec4(aPos, 1.0);
-
     vs_out.FragPos = vec3(model * vec4(aPos, 1.0));
     vs_out.FragUV = aTexCoords;
 
-    // TODO: inverse operation is complicated, calculate this on the CPU and pass it to the shader.
+    // TODO: inverse operation is expensive, calculate this on the CPU and pass it to the shader.
     mat3 normalMatrix = transpose(inverse(mat3(model)));
     vec3 T = normalize(normalMatrix * aTangent);
     vec3 N = normalize(normalMatrix * aNormal);
