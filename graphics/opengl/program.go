@@ -22,15 +22,18 @@ const (
 
 // Uniform Constants
 const (
-	ProjectionMatrixKey = "projection"
-	ViewMatrixKey       = "view"
-	ModelMatrixKey      = "model"
-	LightPosKey         = "lightPos"
-	ViewPosKey          = "viewPos"
-	DiffuseSamplerKey   = "diffuseMap"
-	ARMSamplerKey       = "armMap"
-	DispSamplerKey      = "dispMap"
-	NormalSamplerKey    = "normalMap"
+	ProjectionMatrixKey       = "projection"
+	ViewMatrixKey             = "view"
+	ModelMatrixKey            = "model"
+	LightPosKey               = "lightPos"
+	ViewPosKey                = "viewPos"
+	DiffuseSamplerKey         = "diffuseMap"
+	ARMSamplerKey             = "armMap"
+	DispSamplerKey            = "dispMap"
+	NormalSamplerKey          = "normalMap"
+	EnableDisplacementKey     = "enableDisplacement"
+	DispDiscardOutOfBoundsKey = "discardOutOfBounds"
+	HeightScaleKey            = "heightScale"
 )
 
 // Varying Constants

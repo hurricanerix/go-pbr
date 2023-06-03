@@ -82,6 +82,16 @@ func (m *Material) Use() {
 	lightPowerUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPower\x00"))
 	gl.Uniform1f(lightPowerUniform, lightPower)
 
+	enableDisplacement := gl.GetUniformLocation(m.Prog, gl.Str(opengl.EnableDisplacementKey+"\x00"))
+	gl.Uniform1i(enableDisplacement, 1)
+
+	dispDiscardUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DispDiscardOutOfBoundsKey+"\x00"))
+	gl.Uniform1i(dispDiscardUniform, 0)
+
+	hightScale := float32(0.1)
+	hightScaleUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.HeightScaleKey+"\x00"))
+	gl.Uniform1f(hightScaleUniform, hightScale)
+
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, m.diffuse)
 

@@ -63,14 +63,14 @@ func main() {
 	//fmt.Printf("Object Data:\n%s\n", cubeMesh)
 
 	phongShader := opengl.Program{}
-	//if f, err := os.Open("assets/shaders/lgl5.4.vert"); err == nil {
-	if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
+	if f, err := os.Open("assets/shaders/parallax.vert"); err == nil {
+		//if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.VertexShader)
 	}
 
-	//if f, err := os.Open("assets/shaders/lgl5.4.frag"); err == nil {
-	if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
+	if f, err := os.Open("assets/shaders/parallax.frag"); err == nil {
+		//if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.FragmentShader)
 	}
@@ -80,8 +80,9 @@ func main() {
 	phongShader.Link()
 	phongShader.Use() // <- Important to use before loading the material.
 	matDir := "assets/materials"
+	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_bricks2")
 	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
-	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/stone_wall")
+	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/stone_wall")
 
 	brickMat.Load()
 
