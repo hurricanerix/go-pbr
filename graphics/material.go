@@ -24,49 +24,48 @@ func (m *Material) Load() {
 	diffuseUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DiffuseSamplerKey+"\x00"))
 	gl.Uniform1i(diffuseUniform, 0)
 
+	normUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.NormalSamplerKey+"\x00"))
+	gl.Uniform1i(normUniform, 1)
+
+	dispUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DispSamplerKey+"\x00"))
+	gl.Uniform1i(dispUniform, 2)
+
+	armUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.ARMSamplerKey+"\x00"))
+	gl.Uniform1i(armUniform, 3)
+
 	var err error
 	m.diffuse, err = opengl.NewTexture(m.Path+"/diffuse_1k.png", gl.TEXTURE0)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	normUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.NormalSamplerKey+"\x00"))
-
-	gl.Uniform1i(normUniform, 1)
-
 	m.norm, err = opengl.NewTexture(m.Path+"/nor_gl_1k.png", gl.TEXTURE1)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	//armUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.ARMSamplerKey))
-	//gl.Uniform1i(armUniform, 1)
-	//
-	//dispUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DispSamplerKey))
-	//gl.Uniform1i(dispUniform, 2)
+	m.disp, err = opengl.NewTexture(m.Path+"/disp_1k.png", gl.TEXTURE2)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-	//m.arm, err = opengl.NewTexture(m.Path+"/arm_1k.png", gl.TEXTURE1)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-	//
-	//m.disp, err = opengl.NewTexture(m.Path+"/disp_1k.png", gl.TEXTURE2)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
+	m.arm, err = opengl.NewTexture(m.Path+"/arm_1k.png", gl.TEXTURE3)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	gl.BindFragDataLocation(m.Prog, 0, gl.Str(opengl.FragDataLocation+"\x00"))
 }
 
 func (m *Material) Use() {
-	//ambientStrength := float32(0.1)
-	//ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
-	//gl.Uniform1f(ambientStrengthUniform, ambientStrength)
-	//
-	////ambiantColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
-	//ambiantColor := mgl32.Vec3{0.5568, 0.4039, 0.3529}
-	//ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
-	//gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
+	ambientStrength := float32(0.1)
+	ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
+	gl.Uniform1f(ambientStrengthUniform, ambientStrength)
+
+	//ambiantColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
+	ambiantColor := mgl32.Vec3{0.5568, 0.4039, 0.3529}
+	ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
+	gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
 
 	lightPos := mgl32.Vec3{0.0, 0.0, 2.0}
 	lightPosUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.LightPosKey+"\x00"))
@@ -75,13 +74,13 @@ func (m *Material) Use() {
 	// 255,244,161
 	//lightColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
 	//lightColor := mgl32.Vec3{0.6568, 0.5039, 0.4529}
-	//lightColor := mgl32.Vec3{1, 1, 1}
-	//lightColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightColor\x00"))
-	//gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
-	//
-	//lightPower := float32(10)
-	//lightPowerUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPower\x00"))
-	//gl.Uniform1f(lightPowerUniform, lightPower)
+	lightColor := mgl32.Vec3{1, 1, 1}
+	lightColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightColor\x00"))
+	gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
+
+	lightPower := float32(0.2)
+	lightPowerUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPower\x00"))
+	gl.Uniform1f(lightPowerUniform, lightPower)
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, m.diffuse)
@@ -89,20 +88,16 @@ func (m *Material) Use() {
 	gl.ActiveTexture(gl.TEXTURE1)
 	gl.BindTexture(gl.TEXTURE_2D, m.norm)
 
-	//gl.ActiveTexture(gl.TEXTURE1)
-	//gl.BindTexture(gl.TEXTURE_2D, m.arm)
-	//
-	//gl.ActiveTexture(gl.TEXTURE2)
-	//gl.BindTexture(gl.TEXTURE_2D, m.disp)
+	gl.ActiveTexture(gl.TEXTURE2)
+	gl.BindTexture(gl.TEXTURE_2D, m.disp)
+
+	gl.ActiveTexture(gl.TEXTURE3)
+	gl.BindTexture(gl.TEXTURE_2D, m.arm)
 }
 
 func (m *Material) Free() {
-	//gl.DeleteTextures(1, &m.diffuse)
-	//gl.DeleteTextures(1, &m.arm)
-	//gl.DeleteTextures(1, &m.disp)
+	gl.DeleteTextures(1, &m.diffuse)
+	gl.DeleteTextures(1, &m.arm)
+	gl.DeleteTextures(1, &m.disp)
 	gl.DeleteTextures(1, &m.norm)
-}
-
-func (m *Material) Reset() {
-
 }

@@ -28,7 +28,7 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
 
 - [X] Fix tangent and bitangent calculations.
 - [X] Fix mouse input to rotate cube feature.
-- [ ] Fix normal mapping.
+- [X] Fix normal mapping.
 - [ ] Add orbit camera around model feature.
 - [ ] Add orbit light around model feature.
 - [ ] Add keyboard controls to alter ambient light.

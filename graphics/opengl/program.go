@@ -47,8 +47,9 @@ const (
 )
 
 type Program struct {
-	handle uint32
-	linked bool
+	handle  uint32
+	shaders map[ShaderType]uint32
+	linked  bool
 }
 
 func New() *Program {
@@ -85,34 +86,45 @@ func (p *Program) CompileShader(r io.Reader, shaderType ShaderType) {
 		p.handle = gl.CreateProgram()
 	}
 
-	shaderHandle := gl.CreateShader(uint32(shaderType))
+	if p.shaders == nil {
+		p.shaders = make(map[ShaderType]uint32, 2)
+	}
+
+	p.shaders[shaderType] = gl.CreateShader(uint32(shaderType))
 
 	source := read(r) + "\x00"
 
 	csources, free := gl.Strs(source)
 	defer free()
-	gl.ShaderSource(shaderHandle, 1, csources, nil)
-	gl.CompileShader(shaderHandle)
+	gl.ShaderSource(p.shaders[shaderType], 1, csources, nil)
+	gl.CompileShader(p.shaders[shaderType])
 
 	var status int32
-	gl.GetShaderiv(shaderHandle, gl.COMPILE_STATUS, &status)
+	gl.GetShaderiv(p.shaders[shaderType], gl.COMPILE_STATUS, &status)
 	if status == gl.FALSE {
 		var logLength int32
-		gl.GetShaderiv(shaderHandle, gl.INFO_LOG_LENGTH, &logLength)
+		gl.GetShaderiv(p.shaders[shaderType], gl.INFO_LOG_LENGTH, &logLength)
 
 		log := strings.Repeat("\x00", int(logLength+1))
-		gl.GetShaderInfoLog(shaderHandle, logLength, nil, gl.Str(log))
+		gl.GetShaderInfoLog(p.shaders[shaderType], logLength, nil, gl.Str(log))
 
+		p.shaders[shaderType] = 0
 		fmt.Printf("----\n%s\n----\n", source)
 		panic(fmt.Errorf("failed to compile %v: %v", shaderType, log))
 	}
 
-	gl.AttachShader(p.handle, shaderHandle)
 }
 
 func (p *Program) Link() {
-
+	gl.AttachShader(p.handle, p.shaders[VertexShader])
+	gl.AttachShader(p.handle, p.shaders[FragmentShader])
 	gl.LinkProgram(p.handle)
+	defer func() {
+		gl.DeleteShader(p.shaders[VertexShader])
+		p.shaders[VertexShader] = 0
+		gl.DeleteShader(p.shaders[FragmentShader])
+		p.shaders[FragmentShader] = 0
+	}()
 
 	var status int32
 	gl.GetProgramiv(p.handle, gl.LINK_STATUS, &status)

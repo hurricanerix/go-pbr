@@ -25,16 +25,6 @@ var angleX = 0.0
 var angleY = 0.0
 
 func main() {
-	objectDir := "assets/objects"
-	var cubeMesh *obj.Obj
-	if f, err := os.Open(objectDir + "/cube.obj"); err == nil {
-		defer f.Close()
-		cubeMesh = obj.Load(f)
-		cubeMesh.GenNormalRequirements()
-	} else {
-		panic(err)
-	}
-
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
 	}
@@ -56,37 +46,47 @@ func main() {
 		WindowHeight: windowHeight,
 	}
 	renderer.Init()
-	//cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
-	//renderer.SetCubemap(cubemapDir)
+
+	objectDir := "assets/objects"
+	var cubeMesh *obj.Obj
+	if f, err := os.Open(objectDir + "/cube.obj"); err == nil {
+		defer f.Close()
+		cubeMesh = obj.Load(f)
+		cubeMesh.GenNormalRequirements()
+	} else {
+		panic(err)
+	}
+
+	cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
+	renderer.SetCubemap(cubemapDir)
 
 	//fmt.Printf("Object Data:\n%s\n", cubeMesh)
 
 	phongShader := opengl.Program{}
-	if f, err := os.Open("assets/shaders/lgl5.4.vert"); err == nil {
-		//if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
+	//if f, err := os.Open("assets/shaders/lgl5.4.vert"); err == nil {
+	if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.VertexShader)
 	}
 
-	if f, err := os.Open("assets/shaders/lgl5.4.frag"); err == nil {
-		//if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
+	//if f, err := os.Open("assets/shaders/lgl5.4.frag"); err == nil {
+	if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.FragmentShader)
 	}
 
 	phongShader.Link()
-	cubeMesh.Bind()
-	if err := phongShader.Validate(); err != nil {
-		panic(err)
-	}
-
+	phongShader.Use() // <- Important to use before loading the material.
 	matDir := "assets/materials"
 	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
 	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/stone_wall")
 
-	//phongShader.Use()
-
 	brickMat.Load()
+
+	cubeMesh.Bind()
+	if err := phongShader.Validate(); err != nil {
+		panic(err)
+	}
 
 	model := mgl32.Ident4()
 
