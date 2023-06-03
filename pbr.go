@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-pbr/graphics/opengl"
 	"log"
 	"os"
@@ -28,7 +27,7 @@ var angleY = 0.0
 func main() {
 	objectDir := "assets/objects"
 	var cubeMesh *obj.Obj
-	if f, err := os.Open(objectDir + "/plane.obj"); err == nil {
+	if f, err := os.Open(objectDir + "/cube.obj"); err == nil {
 		defer f.Close()
 		cubeMesh = obj.Load(f)
 		cubeMesh.GenNormalRequirements()
@@ -57,18 +56,20 @@ func main() {
 		WindowHeight: windowHeight,
 	}
 	renderer.Init()
-	cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
-	renderer.SetCubemap(cubemapDir)
+	//cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
+	//renderer.SetCubemap(cubemapDir)
 
-	fmt.Printf("Object Data:\n%s\n", cubeMesh)
+	//fmt.Printf("Object Data:\n%s\n", cubeMesh)
 
 	phongShader := opengl.Program{}
 	if f, err := os.Open("assets/shaders/lgl5.4.vert"); err == nil {
+		//if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.VertexShader)
 	}
 
 	if f, err := os.Open("assets/shaders/lgl5.4.frag"); err == nil {
+		//if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
 		defer f.Close()
 		phongShader.CompileShader(f, opengl.FragmentShader)
 	}
@@ -80,7 +81,8 @@ func main() {
 	}
 
 	matDir := "assets/materials"
-	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
+	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
+	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/stone_wall")
 
 	//phongShader.Use()
 
@@ -88,7 +90,7 @@ func main() {
 
 	model := mgl32.Ident4()
 
-	var cameraPos = mgl32.Vec3{0.0, 0.0, 3.0}
+	var cameraPos = mgl32.Vec3{0.0, 2.0, 5.0}
 
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
@@ -96,7 +98,7 @@ func main() {
 	phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
 	phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
 
-	phongShader.SetUniform3fv("ViewPos", cameraPos)
+	phongShader.SetUniform3fv(opengl.ViewPosKey, cameraPos)
 
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)

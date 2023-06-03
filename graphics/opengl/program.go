@@ -22,22 +22,28 @@ const (
 
 // Uniform Constants
 const (
-	ProjectionMatrixKey = "projection\x00"
-	ViewMatrixKey       = "view\x00"
-	ModelMatrixKey      = "model\x00"
-	LightPosKey         = "lightPos\x00"
-	ViewPosKey          = "viewPos\x00"
-	DiffuseSamplerKey   = "diffuseMap\x00"
-	NormalSamplerKey    = "normalMap\x00"
+	ProjectionMatrixKey = "projection"
+	ViewMatrixKey       = "view"
+	ModelMatrixKey      = "model"
+	LightPosKey         = "lightPos"
+	ViewPosKey          = "viewPos"
+	DiffuseSamplerKey   = "diffuseMap"
+	ARMSamplerKey       = "armMap"
+	DispSamplerKey      = "dispMap"
+	NormalSamplerKey    = "normalMap"
 )
 
 // Varying Constants
 const (
-	VertexPosKey       = "aPos\x00"
-	VertexNormalKey    = "aNormal\x00"
-	VertexUVKey        = "aTexCoords\x00"
-	VertexTangentKey   = "aTangent\x00"
-	VertexBitangentKey = "aBitangent\x00"
+	VertexPosKey       = "aPos"
+	VertexNormalKey    = "aNormal"
+	VertexUVKey        = "aTexCoords"
+	VertexTangentKey   = "aTangent"
+	VertexBitangentKey = "aBitangent"
+)
+
+const (
+	FragDataLocation = "FragColor"
 )
 
 type Program struct {
@@ -252,12 +258,15 @@ func NewTexture(file string, loc uint32) (uint32, error) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+	x := int32(rgba.Rect.Size().X)
+	y := int32(rgba.Rect.Size().Y)
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
 		0,
 		gl.RGBA,
-		int32(rgba.Rect.Size().X),
-		int32(rgba.Rect.Size().Y),
+		x,
+		y,
 		0,
 		gl.RGBA,
 		gl.UNSIGNED_BYTE,

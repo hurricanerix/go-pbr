@@ -198,24 +198,24 @@ func (o Obj) Use(prog uint32) {
 		stride = 14 * 4
 	}
 
-	vertAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexPosKey)))
+	vertAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexPosKey+"\x00")))
 	gl.EnableVertexAttribArray(vertAttrib)
 	gl.VertexAttribPointerWithOffset(vertAttrib, 3, gl.FLOAT, false, stride, 0)
 
-	uvAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexUVKey)))
+	uvAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexUVKey+"\x00")))
 	gl.EnableVertexAttribArray(uvAttrib)
 	gl.VertexAttribPointerWithOffset(uvAttrib, 2, gl.FLOAT, false, stride, 3*4)
 
-	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexNormalKey)))
+	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexNormalKey+"\x00")))
 	gl.EnableVertexAttribArray(normalAttrib)
 	gl.VertexAttribPointerWithOffset(normalAttrib, 3, gl.FLOAT, false, stride, 5*4)
 
 	if len(o.Tangents) > 0 {
-		tangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexTangentKey)))
+		tangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexTangentKey+"\x00")))
 		gl.EnableVertexAttribArray(tangentAttrib)
 		gl.VertexAttribPointerWithOffset(tangentAttrib, 3, gl.FLOAT, false, stride, 8*4)
 
-		bitangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexBitangentKey)))
+		bitangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexBitangentKey+"\x00")))
 		gl.EnableVertexAttribArray(bitangentAttrib)
 		gl.VertexAttribPointerWithOffset(bitangentAttrib, 3, gl.FLOAT, false, stride, 11*4)
 	}

@@ -1,17 +1,17 @@
 #version 410
 
-uniform sampler2D DiffuseSampler;
+uniform sampler2D diffuseMap;
 uniform sampler2D ArmSampler;
-uniform sampler2D NormalSampler; // TODO: put disp into alpha of normal.
+uniform sampler2D normalMap; // TODO: put disp into alpha of normal.
 uniform sampler2D DispSampler;
 
-uniform float AmbientStrength;
-uniform vec3 AmbientColor;
-uniform vec3 LightPos;
-uniform vec3 LightColor;
-uniform float LightPower;
-uniform mat4 Model;
-uniform vec3 ViewPos;
+//uniform float AmbientStrength;
+//uniform vec3 AmbientColor;
+uniform vec3 lightPos;
+//uniform vec3 LightColor;
+//uniform float LightPower;
+//uniform mat4 Model;
+uniform vec3 viewPos;
 
 in VS_OUT {
     vec3 FragPos;
@@ -26,9 +26,14 @@ out vec4 FragColor;
 const float specularStrength = 0.5;
 
 void main() {
-    float alpha = texture(DiffuseSampler, fs_in.FragUV).a;
-    vec3 color = texture(DiffuseSampler, fs_in.FragUV).rgb;
-    vec3 normal = texture(NormalSampler, fs_in.FragUV).rgb;
+    float AmbientStrength = 1;
+    vec3 AmbientColor = vec3(0.2, 0.2, 0.2);
+    vec3 LightColor = vec3(0.0, 0.0, 0.5);
+
+
+    float alpha = texture(diffuseMap, fs_in.FragUV).a;
+    vec3 color = texture(diffuseMap, fs_in.FragUV).rgb;
+    vec3 normal = texture(normalMap, fs_in.FragUV).rgb;
     normal = normalize(normal * 2.0 - 1.0);
 
     // Calculate Ambient Component
@@ -48,4 +53,5 @@ void main() {
 
     // Calculate Final Color
     FragColor = vec4((ambient + diffuse + specular) * color, alpha);
+    FragColor = vec4(normal, 1.0);
 }
