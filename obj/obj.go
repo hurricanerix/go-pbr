@@ -40,6 +40,10 @@ func Load(data io.Reader) *Obj {
 	// optionally, resize scanner's capacity for lines over 64K, see next example
 	for scanner.Scan() {
 		line := scanner.Text()
+		if line == "" {
+			continue
+		}
+
 		lineType := lineTypeRx.FindAllString(line, 1)
 		switch lineType[0] {
 		case "v ":
@@ -51,6 +55,7 @@ func Load(data io.Reader) *Obj {
 		case "f ":
 			o.Faces = append(o.Faces, parseFace(line)...)
 		default:
+
 		}
 	}
 

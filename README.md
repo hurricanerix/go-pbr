@@ -56,4 +56,4 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
   - Model Rotation
   - Camera Rotation
   - Light Rotation
-
+- look into filename_{arch}.go patterns

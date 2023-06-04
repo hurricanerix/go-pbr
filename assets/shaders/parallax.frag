@@ -44,16 +44,6 @@ void main() {
         // TODO: possibly replace with steep parallax mapping.
         texCoords = ParallaxMapping(texCoords, viewDir);
 
-        while(currentLayerDepth < currentDepthMapValue)
-        {
-            // shift texture coordinates along direction of P
-            currentTexCoords -= deltaTexCoords;
-            // get depthmap value at current texture coordinates
-            currentDepthMapValue = texture(depthMap, currentTexCoords).r;
-            // get depth of next layer
-            currentLayerDepth += layerDepth;
-        }
-
         if (discardOutOfBounds == 1 &&
         (texCoords.x < 0.0 || texCoords.y < 0.0 ||
         texCoords.x > 1.0 || texCoords.y > 1.0)) {
@@ -83,5 +73,5 @@ void main() {
 
     // Calculate Final Color
     FragColor = vec4(clamp(ambient + diffuse + specular, 0.0, 1.0), alpha);
-    //    FragColor = vec4(normal, 1.0);
+//    FragColor = vec4(color, 1.0);
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"go-pbr/graphics/opengl"
 	"log"
 	"os"
@@ -25,6 +26,12 @@ var angleX = 0.0
 var angleY = 0.0
 
 func main() {
+	mesh := flag.String("mesh", "assets/objects/cube.obj", "")
+	material := flag.String("material", "assets/materials/lgl_pbr_rusted_iron", "")
+	skymap := flag.String("skymap", "assets/cubemaps/castle-zavelstein-cellar", "")
+
+	flag.Parse()
+
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
 	}
@@ -47,9 +54,8 @@ func main() {
 	}
 	renderer.Init()
 
-	objectDir := "assets/objects"
 	var cubeMesh *obj.Obj
-	if f, err := os.Open(objectDir + "/cube.obj"); err == nil {
+	if f, err := os.Open(*mesh); err == nil {
 		defer f.Close()
 		cubeMesh = obj.Load(f)
 		cubeMesh.GenNormalRequirements()
@@ -57,10 +63,7 @@ func main() {
 		panic(err)
 	}
 
-	cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
-	renderer.SetCubemap(cubemapDir)
-
-	//fmt.Printf("Object Data:\n%s\n", cubeMesh)
+	renderer.SetCubemap(*skymap)
 
 	phongShader := opengl.Program{}
 	if f, err := os.Open("assets/shaders/parallax.vert"); err == nil {
@@ -79,8 +82,7 @@ func main() {
 	//       when the textures are loaded.q
 	phongShader.Link()
 	phongShader.Use() // <- Important to use before loading the material.
-	matDir := "assets/materials"
-	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_bricks2")
+	brickMat := graphics.NewMaterial(phongShader.Handle(), *material)
 	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
 	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/stone_wall")
 
