@@ -2,12 +2,60 @@ package obj
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go-pbr/mesh"
 	"io"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
+
+func TestDecode(t *testing.T) {
+	tests := []struct {
+		name         string
+		input        io.Reader
+		inputOptions mesh.DecodeOptions
+		wantConfig   mesh.Config
+		wantData     []float32
+	}{
+		{
+			name:         "simple",
+			input:        strings.NewReader(TriangleOBJ),
+			inputOptions: mesh.DecodeOptions{SkipHeaderCheck: true},
+			wantConfig:   TriangleConfig,
+			wantData:     TriangleData,
+		},
+		{
+			name:         "simple-with-tangents",
+			input:        strings.NewReader(TriangleOBJ),
+			inputOptions: mesh.DecodeOptions{SkipHeaderCheck: true, CalculateTangentsIfMissing: true},
+			wantConfig:   TriangleConfigWithTangents,
+			wantData:     TriangleDataWithTangents,
+		},
+		{
+			name:         "simple-blender",
+			input:        strings.NewReader(BlenderObjHeader + TriangleOBJ),
+			inputOptions: mesh.DecodeOptions{},
+			wantConfig:   TriangleConfig,
+			wantData:     TriangleData,
+		},
+		{
+			name:         "simple-blender-with-tangents",
+			input:        strings.NewReader(BlenderObjHeader + TriangleOBJ),
+			inputOptions: mesh.DecodeOptions{CalculateTangentsIfMissing: true},
+			wantConfig:   TriangleConfigWithTangents,
+			wantData:     TriangleDataWithTangents,
+		},
+	}
+
+	for _, tc := range tests {
+		got, err := Decode(tc.input, tc.inputOptions)
+		require.Nil(t, err, "%s returned error", tc.name)
+		require.NotNil(t, got, "%s received nil mesh", tc.name)
+		assert.Equal(t, tc.wantConfig, got.Config())
+		assert.Equal(t, tc.wantData, got.Data(), tc.name)
+	}
+}
 
 func TestParseVec3(t *testing.T) {
 	tests := []struct {
@@ -54,23 +102,6 @@ func TestParseFace(t *testing.T) {
 	}
 }
 
-func TestBufferData(t *testing.T) {
-	tests := []struct {
-		name  string
-		input io.Reader
-		want  []float32
-	}{
-		{name: "simple", input: strings.NewReader(TriangleMesh), want: TriangleBufferData},
-	}
-
-	for _, tc := range tests {
-		obj := Load(tc.input)
-		got := obj.BufferData()
-		assert.Equal(t, tc.want, got, tc.name)
-	}
-}
-
-// func calculateTB(v1, v2, v3 mgl32.Vec3, u1, u2, u3 mgl32.Vec2) (mgl32.Vec3, mgl32.Vec3) {
 func TestCalculateTB(t *testing.T) {
 	tests := []struct {
 		name      string

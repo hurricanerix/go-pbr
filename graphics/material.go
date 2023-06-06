@@ -7,7 +7,28 @@ import (
 	"log"
 )
 
-type Material struct {
+type Material interface {
+	Use() error
+	Free() error
+}
+
+type LitMaterial struct {
+	Path string
+}
+
+func (m *LitMaterial) Load() error {
+	return nil
+}
+
+func (m LitMaterial) Use() error {
+	return nil
+}
+
+func (m LitMaterial) Free() error {
+	return nil
+}
+
+type OldMaterial struct {
 	Prog    uint32
 	Path    string
 	diffuse uint32
@@ -16,11 +37,15 @@ type Material struct {
 	norm    uint32
 }
 
-func NewMaterial(prog uint32, path string) *Material {
-	return &Material{Prog: prog, Path: path}
+func NewLitMaterial(materialPath string) *OldMaterial {
+	return nil
 }
 
-func (m *Material) Load() {
+func NewMaterial(prog uint32, path string) *OldMaterial {
+	return &OldMaterial{Prog: prog, Path: path}
+}
+
+func (m *OldMaterial) Load() {
 	diffuseUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DiffuseSamplerKey+"\x00"))
 	gl.Uniform1i(diffuseUniform, 0)
 
@@ -57,7 +82,7 @@ func (m *Material) Load() {
 	gl.BindFragDataLocation(m.Prog, 0, gl.Str(opengl.FragDataLocation+"\x00"))
 }
 
-func (m *Material) Use() {
+func (m *OldMaterial) Use() {
 	ambientStrength := float32(0.2)
 	ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
 	gl.Uniform1f(ambientStrengthUniform, ambientStrength)
@@ -105,7 +130,7 @@ func (m *Material) Use() {
 	gl.BindTexture(gl.TEXTURE_2D, m.arm)
 }
 
-func (m *Material) Free() {
+func (m *OldMaterial) Free() {
 	gl.DeleteTextures(1, &m.diffuse)
 	gl.DeleteTextures(1, &m.arm)
 	gl.DeleteTextures(1, &m.disp)
