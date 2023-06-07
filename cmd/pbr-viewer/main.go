@@ -10,6 +10,7 @@ import (
 	_ "go-pbr/mesh/obj"
 	"go-pbr/scene"
 	"log"
+	"math/rand"
 	"os"
 )
 
@@ -51,6 +52,7 @@ func main() {
 		0: scene.Object{
 			Transform: graphics.Transform{Scale: mgl32.Vec3{1, 1, 1}},
 			Renderer: graphics.Renderer{
+				ID:      rand.Int(),
 				Program: graphics.NewProgram("assets/shaders/debug.vert", "assets/shaders/debug.frag"),
 				Mesh:    subject,
 				Material: material.PBR{

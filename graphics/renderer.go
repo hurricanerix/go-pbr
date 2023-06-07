@@ -14,6 +14,7 @@ type Transform struct {
 }
 
 type Renderer struct {
+	ID       int
 	Program  *Program
 	Mesh     mesh.Mesh
 	Material material.Material
@@ -26,8 +27,11 @@ type Renderer struct {
 }
 
 func (r *Renderer) Attach() error {
-	gl.GenVertexArrays(1, &(r.vao))
-	gl.GenBuffers(1, &(r.vbo))
+	var tmp uint32
+	gl.GenVertexArrays(1, &(tmp))
+	r.vao = tmp
+	gl.GenBuffers(1, &(tmp))
+	r.vbo = tmp
 	if err := r.Bind(); err != nil {
 		return nil
 	}
@@ -69,9 +73,9 @@ func (r *Renderer) Bind() error {
 
 func (r *Renderer) SetTransform(t Transform) error {
 	r.Model = mgl32.Ident4()
-	r.Model = r.Model.Mul4(mgl32.HomogRotate3DX(t.Rotation.X()))
-	r.Model = r.Model.Mul4(mgl32.HomogRotate3DY(t.Rotation.Y()))
-	r.Model = r.Model.Mul4(mgl32.HomogRotate3DZ(t.Rotation.Z()))
+	//r.Model = r.Model.Mul4(mgl32.HomogRotate3DX(t.Rotation.X()))
+	//r.Model = r.Model.Mul4(mgl32.HomogRotate3DY(t.Rotation.Y()))
+	//r.Model = r.Model.Mul4(mgl32.HomogRotate3DZ(t.Rotation.Z()))
 	return nil
 }
 

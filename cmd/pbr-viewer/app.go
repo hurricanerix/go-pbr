@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 	"go-pbr/graphics"
 	"go-pbr/scene"
 	"runtime"
@@ -64,10 +65,14 @@ func (a *app) Init() error {
 
 func (a *app) Run() error {
 	for _, o := range a.Scene {
-		if err := o.Bind(); err != nil {
+		if err := o.Attach(); err != nil {
 			return err
 		}
 	}
+
+	var cameraPos = mgl32.Vec3{0.0, 2.0, 5.0}
+	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(a.WindowWidth)/float32(a.WindowHeight), 0.1, 20.0)
+	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
 
 	for !a.window.ShouldClose() {
 		a.backend.Clear()
@@ -80,6 +85,11 @@ func (a *app) Run() error {
 		}
 
 		for _, o := range a.Scene {
+			if err := o.Bind(); err != nil {
+				return err
+			}
+			o.Renderer.Projection = projMatrix
+			o.Renderer.View = viewMatrix
 			if err := o.Draw(); err != nil {
 				return err
 			}

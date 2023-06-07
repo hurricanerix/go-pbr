@@ -10,6 +10,13 @@ type Object struct {
 	Renderer graphics.Renderer
 }
 
+func (o *Object) Attach() error {
+	if err := o.Renderer.Attach(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (o *Object) Bind() error {
 	//if err := o.Renderer.LoadMaterial(o.Material); err != nil {
 	//	return err
@@ -28,6 +35,7 @@ func (o *Object) Update(dt float32) error {
 }
 
 func (o *Object) Draw() error {
+
 	if err := o.Renderer.Draw(); err != nil {
 		return err
 	}
