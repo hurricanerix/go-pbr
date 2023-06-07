@@ -8,9 +8,10 @@ type Mesh interface {
 
 // Config is responsible for providing the data needed to decode the data.
 type Config struct {
+	Indices int32 // TODO: <-- implement
 	// Specifies the byte offset between consecutive generic vertex attributes. If stride is 0, the generic vertex
 	// attributes are understood to be tightly packed in the array. The initial value is 0.
-	Stride uint32
+	Stride int32
 
 	Fields map[VertexAttribute]VertexAttributeData
 }

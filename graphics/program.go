@@ -1,7 +1,8 @@
-package opengl
+package graphics
 
 import (
 	"fmt"
+	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/draw"
@@ -9,8 +10,6 @@ import (
 	"io"
 	"os"
 	"strings"
-
-	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
 type ShaderType int
@@ -55,8 +54,27 @@ type Program struct {
 	linked  bool
 }
 
-func New() *Program {
-	return &Program{}
+func NewProgram(vertPath, fragPath string) *Program {
+	prog := Program{}
+	if f, err := os.Open(vertPath); err == nil {
+		defer f.Close()
+		prog.CompileShader(f, VertexShader)
+	} else {
+		panic(err)
+	}
+
+	if f, err := os.Open(fragPath); err == nil {
+		defer f.Close()
+		prog.CompileShader(f, FragmentShader)
+	} else {
+		panic(err)
+	}
+
+	prog.Link()
+	prog.Use()
+
+	return &prog
+
 }
 
 func (p *Program) Destroy() {

@@ -1,90 +1,91 @@
 package graphics
 
 import (
-	"fmt"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"go-pbr/graphics/opengl"
-	_ "image/png"
+	"go-pbr/material"
+	"go-pbr/mesh"
 )
 
+type Transform struct {
+	Position mgl32.Vec3
+	Rotation mgl32.Vec3
+	Scale    mgl32.Vec3
+}
+
 type Renderer struct {
-	CubeMapTex    uint32
-	CubeMapVao    uint32
-	cubemapShader opengl.Program
-	WindowWidth   float32
-	WindowHeight  float32
-	//cubemapMesh   *mesh.Obj
-	RenderBack bool
+	Program  *Program
+	Mesh     mesh.Mesh
+	Material material.Material
+
+	Projection mgl32.Mat4
+	View       mgl32.Mat4
+	Model      mgl32.Mat4
+	vao        uint32
+	vbo        uint32
 }
 
-func (r *Renderer) Init() {
-	if err := gl.Init(); err != nil {
-		panic(err)
+func (r *Renderer) Attach() error {
+	gl.GenVertexArrays(1, &(r.vao))
+	gl.GenBuffers(1, &(r.vbo))
+	if err := r.Bind(); err != nil {
+		return nil
 	}
-	version := gl.GoStr(gl.GetString(gl.VERSION))
-	fmt.Println("OpenGL version", version)
-	slversion := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
-	fmt.Println("OpenGL SL version", slversion)
+	gl.BufferData(gl.ARRAY_BUFFER, len(r.Mesh.Data())*4, gl.Ptr(r.Mesh.Data()), gl.STATIC_DRAW)
 
-	// Configure global settings
-	gl.Enable(gl.TEXTURE_2D)
-	if !r.RenderBack {
-		gl.Enable(gl.CULL_FACE)
-		gl.CullFace(gl.BACK)
-	}
-	gl.Enable(gl.DEPTH_TEST)
-	gl.FrontFace(gl.CCW)
-	gl.DepthRange(0, 1)
-	gl.DepthFunc(gl.LESS)
-	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
-
-	// move above
-
-	gl.GenVertexArrays(1, &(m.vao))
-	gl.BindVertexArray(m.vao)
-
-	gl.GenBuffers(1, &(m.vbo))
-	gl.BindBuffer(gl.ARRAY_BUFFER, m.vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(m.data)*4, gl.Ptr(m.data), gl.STATIC_DRAW)
+	return nil
 }
 
-func (r *Renderer) Draw(data []float32) {
-
+func (r *Renderer) Detatch() error {
+	r.Program.Destroy() // TODO: rename Delete
+	return nil
 }
 
-func (r *Renderer) Clear(view mgl32.Mat4) {
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gl.UseProgram(0)
-	gl.BindTexture(gl.TEXTURE_2D, 0)
+func (r *Renderer) Bind() error {
+	gl.BindVertexArray(r.vao)
+	gl.BindBuffer(gl.ARRAY_BUFFER, r.vbo)
 
-	if r.CubeMapTex <= 0 {
-		return
+	for k, v := range r.Mesh.Config().Fields {
+		var attribName string
+		switch k {
+		case mesh.Position:
+			attribName = VertexPosKey
+		case mesh.TexCoord:
+			attribName = VertexUVKey
+		case mesh.Normal:
+			attribName = VertexNormalKey
+		case mesh.Tangent:
+			attribName = VertexTangentKey
+		case mesh.Bitangent:
+			attribName = VertexBitangentKey
+		}
+		attrib := uint32(gl.GetAttribLocation(r.Program.Handle(), gl.Str(attribName+"\x00")))
+		gl.EnableVertexAttribArray(attrib)
+		gl.VertexAttribPointerWithOffset(attrib, v.Size, gl.FLOAT, false, r.Mesh.Config().Stride, v.Offset)
 	}
 
-	ProjMatrix := mgl32.Perspective(mgl32.DegToRad(10.0), r.WindowWidth/r.WindowHeight, 0.1, 20.0)
-	gl.DepthMask(false)
-
-	if r.RenderBack {
-		gl.Enable(gl.CULL_FACE)
-		gl.FrontFace(gl.CCW)
-		gl.CullFace(gl.BACK)
-	}
-
-	r.cubemapShader.Use()
-	r.cubemapShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, ProjMatrix)
-	r.cubemapShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, view)
-	gl.ActiveTexture(gl.TEXTURE_CUBE_MAP)
-	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.CubeMapTex)
-	//r.cubemapMesh.Use(r.cubemapShader.Handle())
-	//r.cubemapMesh.Draw()
-
-	gl.DepthMask(true)
-	if !r.RenderBack {
-		gl.Disable(gl.CULL_FACE)
-	}
+	return nil
 }
 
-func (r *Renderer) Destroy() {
+func (r *Renderer) SetTransform(t Transform) error {
+	r.Model = mgl32.Ident4()
+	r.Model = r.Model.Mul4(mgl32.HomogRotate3DX(t.Rotation.X()))
+	r.Model = r.Model.Mul4(mgl32.HomogRotate3DY(t.Rotation.Y()))
+	r.Model = r.Model.Mul4(mgl32.HomogRotate3DZ(t.Rotation.Z()))
+	return nil
+}
 
+func (r *Renderer) Draw() error {
+	r.Program.Use() // <- Important to use before loading the material.
+	if err := r.Material.Use(); err != nil {
+		return err
+	}
+
+	r.Program.SetUniformMatrix4fv(ProjectionMatrixKey, r.Projection)
+	r.Program.SetUniformMatrix4fv(ViewMatrixKey, r.View)
+	r.Program.SetUniformMatrix4fv(ModelMatrixKey, r.Model)
+
+	gl.DrawArrays(gl.TRIANGLES, 0, r.Mesh.Config().Indices)
+
+	return nil
 }
