@@ -3,6 +3,7 @@ package main
 import (
 	"go-pbr/graphics/opengl"
 	"log"
+	"math"
 	"os"
 	"runtime"
 
@@ -21,8 +22,9 @@ func init() {
 	runtime.LockOSThread()
 }
 
-var angleX = 0.0
-var angleY = 0.0
+var modelAngle = 0.0
+var cameraAngle = 0.0
+var lightAngle = 0.0
 
 func main() {
 	if err := glfw.Init(); err != nil {
@@ -93,9 +95,9 @@ func main() {
 	model := mgl32.Ident4()
 
 	var cameraPos = mgl32.Vec3{0.0, 2.0, 5.0}
-
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
+
 	phongShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
 	phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
 	phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
@@ -105,20 +107,26 @@ func main() {
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)
 
+	lightDistance := float32(5)
+	rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
+	rotLight = rotLight.Mul(lightDistance)
+	phongShader.SetUniform3fv(opengl.LightPosKey, rotLight)
+
 	for !window.ShouldClose() {
 		// Update
-		xrot := mgl32.HomogRotate3D(float32(angleX), mgl32.Vec3{0, 1, 0})
-		//yrot := mgl32.HomogRotate3D(float32(angleY), mgl32.Vec3{1, 0, 0})
-		model = xrot //xrot.Mul4(yrot)
-
+		rotModel := model.Mul4(mgl32.HomogRotate3DY(float32(modelAngle)))
+		rotViewMatrix := viewMatrix.Mul4(mgl32.HomogRotate3DY(float32(cameraAngle)))
+		rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
+		rotLight = rotLight.Mul(lightDistance)
 		// Render
-		renderer.Clear(viewMatrix)
+		renderer.Clear(rotViewMatrix)
 		// for each material {
 		phongShader.Use()
 		phongShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
-		phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
-		phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
+		phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, rotViewMatrix)
+		phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, rotModel)
 		phongShader.SetUniform3fv(opengl.ViewPosKey, cameraPos)
+		phongShader.SetUniform3fv(opengl.LightPosKey, rotLight)
 		// for each object using material
 		cubeMesh.Use(phongShader.Handle())
 		brickMat.Use()
@@ -136,15 +144,13 @@ func main() {
 
 var currentX float64
 var previousX float64
-var currentY float64
-var previousY float64
 var rotateCube bool
+var rotateCamera bool
+var rotateLight bool
 
 func mousePosCallback(w *glfw.Window, xpos float64, ypos float64) {
 	previousX = currentX
 	currentX = xpos
-	previousY = currentY
-	currentY = ypos
 
 	if rotateCube {
 		speed := 0.05
@@ -154,15 +160,29 @@ func mousePosCallback(w *glfw.Window, xpos float64, ypos float64) {
 		} else if previousX > currentX {
 			dirX = -1.0
 		}
-		angleX += dirX * speed / 2
+		modelAngle += dirX * speed / 2
+	}
 
-		dirY := 0.0
-		if previousY < currentY {
-			dirY = 1.0
-		} else if previousY > currentY {
-			dirY = -1.0
+	if rotateCamera {
+		speed := 0.05
+		dirX := 0.0
+		if previousX < currentX {
+			dirX = -1.0
+		} else if previousX > currentX {
+			dirX = 1.0
 		}
-		angleY += dirY * speed
+		cameraAngle += dirX * speed / 2
+	}
+
+	if rotateLight {
+		speed := 0.05
+		dirX := 0.0
+		if previousX < currentX {
+			dirX = -1.0
+		} else if previousX > currentX {
+			dirX = 1.0
+		}
+		lightAngle += dirX * speed / 2
 	}
 }
 
@@ -173,5 +193,21 @@ func mouseButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Ac
 
 	if button == glfw.MouseButtonLeft && action == glfw.Release {
 		rotateCube = false
+	}
+
+	if button == glfw.MouseButtonRight && action == glfw.Press {
+		rotateLight = true
+	}
+
+	if button == glfw.MouseButtonRight && action == glfw.Release {
+		rotateLight = false
+	}
+
+	if button == glfw.MouseButtonMiddle && action == glfw.Press {
+		rotateCamera = true
+	}
+
+	if button == glfw.MouseButtonMiddle && action == glfw.Release {
+		rotateCamera = false
 	}
 }

@@ -124,7 +124,7 @@ func (r *Renderer) Clear(view mgl32.Mat4) {
 		return
 	}
 
-	ProjMatrix := mgl32.Perspective(mgl32.DegToRad(10.0), r.WindowWidth/r.WindowHeight, 0.1, 20.0)
+	ProjMatrix := mgl32.Perspective(mgl32.DegToRad(10.0), 1, 0.1, 20.0)
 	gl.DepthMask(false)
 	r.cubemapShader.Use()
 	r.cubemapShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, ProjMatrix)
