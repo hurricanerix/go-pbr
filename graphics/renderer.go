@@ -89,12 +89,12 @@ func (r *Renderer) SetCubemap(path string) {
 	}
 
 	r.cubemapShader = opengl.Program{}
-	if f, err := os.Open("assets/shaders/cubemap.vert"); err == nil {
+	if f, err := os.Open("assets/shaders/cubemap/shader.vert"); err == nil {
 		defer f.Close()
 		r.cubemapShader.CompileShader(f, opengl.VertexShader)
 	}
 
-	if f, err := os.Open("assets/shaders/cubemap.frag"); err == nil {
+	if f, err := os.Open("assets/shaders/cubemap/shader.frag"); err == nil {
 		defer f.Close()
 		r.cubemapShader.CompileShader(f, opengl.FragmentShader)
 	}
@@ -124,7 +124,7 @@ func (r *Renderer) Clear(view mgl32.Mat4) {
 		return
 	}
 
-	ProjMatrix := mgl32.Perspective(mgl32.DegToRad(10.0), 1, 0.1, 20.0)
+	ProjMatrix := mgl32.Perspective(mgl32.DegToRad(50.0), 1, 0.1, 200.0)
 	gl.DepthMask(false)
 	r.cubemapShader.Use()
 	r.cubemapShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, ProjMatrix)

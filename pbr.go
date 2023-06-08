@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"go-pbr/graphics/opengl"
 	"log"
 	"math"
@@ -27,6 +29,14 @@ var cameraAngle = 0.0
 var lightAngle = 0.0
 
 func main() {
+	assetPath := flag.String("assets", "assets", "")
+	meshName := flag.String("mesh", "sphere_smooth", "")
+	materialName := flag.String("material", "metal_plate", "")
+	shaderName := flag.String("shader", "phong", "")
+	skymapName := flag.String("skymap", "lgl", "")
+
+	flag.Parse()
+
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
 	}
@@ -49,46 +59,38 @@ func main() {
 	}
 	renderer.Init()
 
-	objectDir := "assets/objects"
-	var cubeMesh *obj.Obj
-	if f, err := os.Open(objectDir + "/cube.obj"); err == nil {
+	var subject *obj.Obj
+	if f, err := os.Open(fmt.Sprintf("%s/meshes/%s.obj", *assetPath, *meshName)); err == nil {
 		defer f.Close()
-		cubeMesh = obj.Load(f)
-		cubeMesh.GenNormalRequirements()
+		subject = obj.Load(f)
+		subject.GenNormalRequirements()
 	} else {
 		panic(err)
 	}
 
-	cubemapDir := "assets/cubemaps/castle-zavelstein-cellar"
-	renderer.SetCubemap(cubemapDir)
+	renderer.SetCubemap(fmt.Sprintf("%s/cubemaps/%s", *assetPath, *skymapName))
 
-	//fmt.Printf("Object Data:\n%s\n", cubeMesh)
-
-	phongShader := opengl.Program{}
-	//if f, err := os.Open("assets/shaders/lgl5.4.vert"); err == nil {
-	if f, err := os.Open("assets/shaders/phong.vert"); err == nil {
+	subjectProgram := opengl.Program{}
+	if f, err := os.Open(fmt.Sprintf("%s/shaders/%s/shader.vert", *assetPath, *shaderName)); err == nil {
 		defer f.Close()
-		phongShader.CompileShader(f, opengl.VertexShader)
+		subjectProgram.CompileShader(f, opengl.VertexShader)
 	}
 
-	//if f, err := os.Open("assets/shaders/lgl5.4.frag"); err == nil {
-	if f, err := os.Open("assets/shaders/phong.frag"); err == nil {
+	if f, err := os.Open(fmt.Sprintf("%s/shaders/%s/shader.frag", *assetPath, *shaderName)); err == nil {
 		defer f.Close()
-		phongShader.CompileShader(f, opengl.FragmentShader)
+		subjectProgram.CompileShader(f, opengl.FragmentShader)
 	}
 
 	// TODO: Move the shader creation into the material initialization so that the shader is always in use
 	//       when the textures are loaded.q
-	phongShader.Link()
-	phongShader.Use() // <- Important to use before loading the material.
-	matDir := "assets/materials"
-	//brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/lgl_brickwall")
-	brickMat := graphics.NewMaterial(phongShader.Handle(), matDir+"/stone_wall")
+	subjectProgram.Link()
+	subjectProgram.Use() // <- Important to use before loading the material.
+	subjectMaterial := graphics.NewMaterial(subjectProgram.Handle(), fmt.Sprintf("%s/materials/%s", *assetPath, *materialName))
 
-	brickMat.Load()
+	subjectMaterial.Load()
 
-	cubeMesh.Bind()
-	if err := phongShader.Validate(); err != nil {
+	subject.Bind()
+	if err := subjectProgram.Validate(); err != nil {
 		panic(err)
 	}
 
@@ -98,11 +100,11 @@ func main() {
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
 
-	phongShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
-	phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
-	phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
+	subjectProgram.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
+	subjectProgram.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
+	subjectProgram.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
 
-	phongShader.SetUniform3fv(opengl.ViewPosKey, cameraPos)
+	subjectProgram.SetUniform3fv(opengl.ViewPosKey, cameraPos)
 
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)
@@ -110,7 +112,7 @@ func main() {
 	lightDistance := float32(5)
 	rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 	rotLight = rotLight.Mul(lightDistance)
-	phongShader.SetUniform3fv(opengl.LightPosKey, rotLight)
+	subjectProgram.SetUniform3fv(opengl.LightPosKey, rotLight)
 
 	for !window.ShouldClose() {
 		// Update
@@ -118,28 +120,25 @@ func main() {
 		rotViewMatrix := viewMatrix.Mul4(mgl32.HomogRotate3DY(float32(cameraAngle)))
 		rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 		rotLight = rotLight.Mul(lightDistance)
+
 		// Render
 		renderer.Clear(rotViewMatrix)
-		// for each material {
-		phongShader.Use()
-		phongShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
-		phongShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, rotViewMatrix)
-		phongShader.SetUniformMatrix4fv(opengl.ModelMatrixKey, rotModel)
-		phongShader.SetUniform3fv(opengl.ViewPosKey, cameraPos)
-		phongShader.SetUniform3fv(opengl.LightPosKey, rotLight)
-		// for each object using material
-		cubeMesh.Use(phongShader.Handle())
-		brickMat.Use()
-		cubeMesh.Draw()
-		// } end each object
-		// } end each material
+		subjectProgram.Use()
+		subjectProgram.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
+		subjectProgram.SetUniformMatrix4fv(opengl.ViewMatrixKey, rotViewMatrix)
+		subjectProgram.SetUniformMatrix4fv(opengl.ModelMatrixKey, rotModel)
+		subjectProgram.SetUniform3fv(opengl.ViewPosKey, cameraPos)
+		subjectProgram.SetUniform3fv(opengl.LightPosKey, rotLight)
+		subject.Use(subjectProgram.Handle())
+		subjectMaterial.Use()
+		subject.Draw()
 
 		// Maintenance
 		window.SwapBuffers()
 		glfw.PollEvents()
 	}
 
-	phongShader.Destroy()
+	subjectProgram.Destroy()
 }
 
 var currentX float64
