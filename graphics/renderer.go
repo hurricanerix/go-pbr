@@ -33,10 +33,11 @@ func (r *Renderer) Init() {
 
 	// Configure global settings
 	gl.Enable(gl.TEXTURE_2D)
-	gl.Enable(gl.CULL_FACE) //| gl.DEPTH_TEST)
+	gl.Enable(gl.CULL_FACE)
+	gl.Enable(gl.DEPTH_TEST)
 	gl.FrontFace(gl.CCW)
 	gl.CullFace(gl.BACK)
-	//gl.DepthFunc(gl.LESS)
+	gl.DepthFunc(gl.LESS)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 }
 
@@ -116,7 +117,7 @@ func (r *Renderer) SetCubemap(path string) {
 }
 
 func (r *Renderer) Clear(view mgl32.Mat4) {
-	gl.Clear(gl.COLOR_BUFFER_BIT) // | gl.DEPTH_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	gl.UseProgram(0)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 

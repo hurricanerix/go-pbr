@@ -35,6 +35,8 @@ func main() {
 	shaderName := flag.String("shader", "phong", "")
 	skymapName := flag.String("skymap", "lgl", "")
 
+	lightAngle += 90
+
 	flag.Parse()
 
 	if err := glfw.Init(); err != nil {
@@ -67,6 +69,7 @@ func main() {
 	} else {
 		panic(err)
 	}
+	subjectColor := mgl32.Vec3{1.0, 1.0, 1.0}
 
 	renderer.SetCubemap(fmt.Sprintf("%s/cubemaps/%s", *assetPath, *skymapName))
 
@@ -129,6 +132,7 @@ func main() {
 		subjectProgram.SetUniformMatrix4fv(opengl.ModelMatrixKey, rotModel)
 		subjectProgram.SetUniform3fv(opengl.ViewPosKey, cameraPos)
 		subjectProgram.SetUniform3fv(opengl.LightPosKey, rotLight)
+		subjectProgram.SetUniform3fv(opengl.Color, subjectColor)
 		subject.Use(subjectProgram.Handle())
 		subjectMaterial.Use()
 		subject.Draw()
