@@ -2,7 +2,6 @@ package graphics
 
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 	"log"
 )
 
@@ -57,25 +56,26 @@ func (m *Material) Load() {
 }
 
 func (m *Material) Use() {
-	ambientStrength := float32(0.2)
-	ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
-	gl.Uniform1f(ambientStrengthUniform, ambientStrength)
-
-	//ambiantColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
-	ambiantColor := mgl32.Vec3{0.5568, 0.4039, 0.3529}
-	ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
-	gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
+	//ambientStrength := float32(0.2)
+	//ambientStrengthUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientStrength\x00"))
+	//gl.Uniform1f(ambientStrengthUniform, ambientStrength)
+	//
+	////ambiantColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
+	//ambiantColor := mgl32.Vec3{0.5568, 0.4039, 0.3529}
+	//ambiantColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("AmbientColor\x00"))
+	//gl.Uniform3fv(ambiantColorUniform, 1, &ambiantColor[0])
 
 	// 255,244,161
 	//lightColor := mgl32.Vec3{1.0, 0.9569, 0.6314}
 	//lightColor := mgl32.Vec3{0.6568, 0.5039, 0.4529}
-	lightColor := mgl32.Vec3{1, 1, 1}
-	lightColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightColor\x00"))
-	gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
+	//lightColor := mgl32.Vec3{1, 1, 1}
+	//lightColor := mgl32.Vec3{150, 150, 150}
+	//lightColorUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightColor\x00"))
+	//gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
 
-	lightPower := float32(0.2)
-	lightPowerUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPower\x00"))
-	gl.Uniform1f(lightPowerUniform, lightPower)
+	//lightPower := float32(0.2)
+	//lightPowerUniform := gl.GetUniformLocation(m.Prog, gl.Str("LightPower\x00"))
+	//gl.Uniform1f(lightPowerUniform, lightPower)
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, m.diffuse)

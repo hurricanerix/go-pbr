@@ -111,7 +111,10 @@ func main() {
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)
 
-	lightDistance := float32(5)
+	lightColor := mgl32.Vec3{150, 150, 150}
+	subjectProgram.SetUniform3fv(graphics.LightColorKey, lightColor)
+
+	lightDistance := float32(10)
 	rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 	rotLight = rotLight.Mul(lightDistance)
 	subjectProgram.SetUniform3fv(graphics.LightPosKey, rotLight)

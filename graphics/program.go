@@ -25,6 +25,7 @@ const (
 	ProjectionMatrixKey = "projection"
 	ViewMatrixKey       = "view"
 	ModelMatrixKey      = "model"
+	LightColorKey       = "LightColor"
 	LightPosKey         = "lightPos"
 	ViewPosKey          = "viewPos"
 	DiffuseSamplerKey   = "diffuseMap"
