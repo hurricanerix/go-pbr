@@ -4,6 +4,8 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
 
 ## TODO
 
+- [ ] Fix Smooth Meshes
+- [ ] Triangulate Quads (OBJ)
 - [ ] Render Fonts
 - [ ] Emission
 - [ ] Framebuffer
@@ -12,4 +14,4 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
 - [ ] HDR
 - [ ] Bloom
 - [ ] Deferred Shading
-- [ ] PBR
+- [X] PBR
