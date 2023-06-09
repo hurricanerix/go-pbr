@@ -3,9 +3,7 @@ package obj
 import (
 	"bufio"
 	"fmt"
-	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"go-pbr/graphics/opengl"
 	"io"
 	"log"
 	"regexp"
@@ -179,48 +177,6 @@ func calculateTB(v1, v2, v3 mgl32.Vec3, u1, u2, u3 mgl32.Vec2) (mgl32.Vec3, mgl3
 	return tangent, bitangent
 }
 
-func (o *Obj) Bind() {
-	// Configure the vertex data
-	gl.GenVertexArrays(1, &(o.Vao))
-	gl.BindVertexArray(o.Vao)
-
-	gl.GenBuffers(1, &(o.Vbo))
-	gl.BindBuffer(gl.ARRAY_BUFFER, o.Vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(o.BufferData())*4, gl.Ptr(o.BufferData()), gl.STATIC_DRAW)
-}
-
-func (o Obj) Use(prog uint32) {
-	gl.BindVertexArray(o.Vao)
-	gl.BindBuffer(gl.ARRAY_BUFFER, o.Vbo)
-
-	stride := int32(8 * 4)
-	if len(o.Tangents) > 0 {
-		stride = 14 * 4
-	}
-
-	vertAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexPosKey+"\x00")))
-	gl.EnableVertexAttribArray(vertAttrib)
-	gl.VertexAttribPointerWithOffset(vertAttrib, 3, gl.FLOAT, false, stride, 0)
-
-	uvAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexUVKey+"\x00")))
-	gl.EnableVertexAttribArray(uvAttrib)
-	gl.VertexAttribPointerWithOffset(uvAttrib, 2, gl.FLOAT, false, stride, 3*4)
-
-	normalAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexNormalKey+"\x00")))
-	gl.EnableVertexAttribArray(normalAttrib)
-	gl.VertexAttribPointerWithOffset(normalAttrib, 3, gl.FLOAT, false, stride, 5*4)
-
-	if len(o.Tangents) > 0 {
-		tangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexTangentKey+"\x00")))
-		gl.EnableVertexAttribArray(tangentAttrib)
-		gl.VertexAttribPointerWithOffset(tangentAttrib, 3, gl.FLOAT, false, stride, 8*4)
-
-		bitangentAttrib := uint32(gl.GetAttribLocation(prog, gl.Str(opengl.VertexBitangentKey+"\x00")))
-		gl.EnableVertexAttribArray(bitangentAttrib)
-		gl.VertexAttribPointerWithOffset(bitangentAttrib, 3, gl.FLOAT, false, stride, 11*4)
-	}
-}
-
 func (o Obj) BufferData() []float32 {
 	vertexCount := len(o.Faces) / 3
 	result := make([]float32, 0, vertexCount*14)
@@ -249,12 +205,8 @@ func (o Obj) BufferData() []float32 {
 	return result
 }
 
-func (o Obj) indices() int32 {
+func (o Obj) Indices() int32 {
 	return int32(len(o.Faces) / 3)
-}
-
-func (o Obj) Draw() {
-	gl.DrawArrays(gl.TRIANGLES, 0, o.indices())
 }
 
 func (o Obj) String() string {
@@ -266,7 +218,7 @@ func (o Obj) String() string {
 	s.WriteString(fmt.Sprintf("Tangent Count: %d\n", len(o.Tangents)))
 	s.WriteString(fmt.Sprintf("Bitangent Count: %d\n", len(o.Bitangents)))
 	s.WriteString(fmt.Sprintf("BufferData Count: %d\n", len(o.BufferData())))
-	s.WriteString(fmt.Sprintf("Indicies Count: %d\n", o.indices()))
+	s.WriteString(fmt.Sprintf("Indicies Count: %d\n", o.Indices()))
 	s.WriteString(fmt.Sprintf("BufferData:\n"))
 
 	if len(o.Tangents) < 0 {

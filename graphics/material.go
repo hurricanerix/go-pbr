@@ -3,7 +3,6 @@ package graphics
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"go-pbr/graphics/opengl"
 	"log"
 )
 
@@ -21,40 +20,40 @@ func NewMaterial(prog uint32, path string) *Material {
 }
 
 func (m *Material) Load() {
-	diffuseUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DiffuseSamplerKey+"\x00"))
+	diffuseUniform := gl.GetUniformLocation(m.Prog, gl.Str(DiffuseSamplerKey+"\x00"))
 	gl.Uniform1i(diffuseUniform, 0)
 
-	normUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.NormalSamplerKey+"\x00"))
+	normUniform := gl.GetUniformLocation(m.Prog, gl.Str(NormalSamplerKey+"\x00"))
 	gl.Uniform1i(normUniform, 1)
 
-	dispUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.DispSamplerKey+"\x00"))
+	dispUniform := gl.GetUniformLocation(m.Prog, gl.Str(DispSamplerKey+"\x00"))
 	gl.Uniform1i(dispUniform, 2)
 
-	armUniform := gl.GetUniformLocation(m.Prog, gl.Str(opengl.ARMSamplerKey+"\x00"))
+	armUniform := gl.GetUniformLocation(m.Prog, gl.Str(ARMSamplerKey+"\x00"))
 	gl.Uniform1i(armUniform, 3)
 
 	var err error
-	m.diffuse, err = opengl.NewTexture(m.Path+"/diffuse_1k.png", gl.TEXTURE0)
+	m.diffuse, err = NewTexture(m.Path+"/diffuse_1k.png", gl.TEXTURE0)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	m.norm, err = opengl.NewTexture(m.Path+"/nor_gl_1k.png", gl.TEXTURE1)
+	m.norm, err = NewTexture(m.Path+"/nor_gl_1k.png", gl.TEXTURE1)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	m.disp, err = opengl.NewTexture(m.Path+"/disp_1k.png", gl.TEXTURE2)
+	m.disp, err = NewTexture(m.Path+"/disp_1k.png", gl.TEXTURE2)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	m.arm, err = opengl.NewTexture(m.Path+"/arm_1k.png", gl.TEXTURE3)
+	m.arm, err = NewTexture(m.Path+"/arm_1k.png", gl.TEXTURE3)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	gl.BindFragDataLocation(m.Prog, 0, gl.Str(opengl.FragDataLocation+"\x00"))
+	gl.BindFragDataLocation(m.Prog, 0, gl.Str(FragDataLocation+"\x00"))
 }
 
 func (m *Material) Use() {

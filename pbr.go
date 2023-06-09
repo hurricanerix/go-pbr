@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go-pbr/graphics/opengl"
 	"log"
 	"math"
 	"os"
@@ -73,15 +72,15 @@ func main() {
 
 	renderer.SetCubemap(fmt.Sprintf("%s/cubemaps/%s", *assetPath, *skymapName))
 
-	subjectProgram := opengl.Program{}
+	subjectProgram := graphics.Program{}
 	if f, err := os.Open(fmt.Sprintf("%s/shaders/%s/shader.vert", *assetPath, *shaderName)); err == nil {
 		defer f.Close()
-		subjectProgram.CompileShader(f, opengl.VertexShader)
+		subjectProgram.CompileShader(f, graphics.VertexShader)
 	}
 
 	if f, err := os.Open(fmt.Sprintf("%s/shaders/%s/shader.frag", *assetPath, *shaderName)); err == nil {
 		defer f.Close()
-		subjectProgram.CompileShader(f, opengl.FragmentShader)
+		subjectProgram.CompileShader(f, graphics.FragmentShader)
 	}
 
 	// TODO: Move the shader creation into the material initialization so that the shader is always in use
@@ -92,7 +91,7 @@ func main() {
 
 	subjectMaterial.Load()
 
-	subject.Bind()
+	graphics.Bind(subject)
 	if err := subjectProgram.Validate(); err != nil {
 		panic(err)
 	}
@@ -103,11 +102,11 @@ func main() {
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
 
-	subjectProgram.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
-	subjectProgram.SetUniformMatrix4fv(opengl.ViewMatrixKey, viewMatrix)
-	subjectProgram.SetUniformMatrix4fv(opengl.ModelMatrixKey, model)
+	subjectProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
+	subjectProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, viewMatrix)
+	subjectProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, model)
 
-	subjectProgram.SetUniform3fv(opengl.ViewPosKey, cameraPos)
+	subjectProgram.SetUniform3fv(graphics.ViewPosKey, cameraPos)
 
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)
@@ -115,7 +114,7 @@ func main() {
 	lightDistance := float32(5)
 	rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 	rotLight = rotLight.Mul(lightDistance)
-	subjectProgram.SetUniform3fv(opengl.LightPosKey, rotLight)
+	subjectProgram.SetUniform3fv(graphics.LightPosKey, rotLight)
 
 	for !window.ShouldClose() {
 		// Update
@@ -127,15 +126,15 @@ func main() {
 		// Render
 		renderer.Clear(rotViewMatrix)
 		subjectProgram.Use()
-		subjectProgram.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, projMatrix)
-		subjectProgram.SetUniformMatrix4fv(opengl.ViewMatrixKey, rotViewMatrix)
-		subjectProgram.SetUniformMatrix4fv(opengl.ModelMatrixKey, rotModel)
-		subjectProgram.SetUniform3fv(opengl.ViewPosKey, cameraPos)
-		subjectProgram.SetUniform3fv(opengl.LightPosKey, rotLight)
-		subjectProgram.SetUniform3fv(opengl.Color, subjectColor)
-		subject.Use(subjectProgram.Handle())
+		subjectProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
+		subjectProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, rotViewMatrix)
+		subjectProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, rotModel)
+		subjectProgram.SetUniform3fv(graphics.ViewPosKey, cameraPos)
+		subjectProgram.SetUniform3fv(graphics.LightPosKey, rotLight)
+		subjectProgram.SetUniform3fv(graphics.Color, subjectColor)
+		graphics.Use(subjectProgram.Handle(), subject)
 		subjectMaterial.Use()
-		subject.Draw()
+		graphics.Draw(subject)
 
 		// Maintenance
 		window.SwapBuffers()

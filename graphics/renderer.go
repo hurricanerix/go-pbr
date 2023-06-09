@@ -3,7 +3,6 @@ package graphics
 import (
 	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
-	"go-pbr/graphics/opengl"
 	"go-pbr/obj"
 	"image"
 	"image/draw"
@@ -16,7 +15,7 @@ import (
 type Renderer struct {
 	CubeMapTex    uint32
 	CubeMapVao    uint32
-	cubemapShader opengl.Program
+	cubemapShader Program
 	WindowWidth   float32
 	WindowHeight  float32
 	cubemapMesh   *obj.Obj
@@ -89,15 +88,15 @@ func (r *Renderer) SetCubemap(path string) {
 			gl.Ptr(rgba.Pix))
 	}
 
-	r.cubemapShader = opengl.Program{}
+	r.cubemapShader = Program{}
 	if f, err := os.Open("assets/shaders/cubemap/shader.vert"); err == nil {
 		defer f.Close()
-		r.cubemapShader.CompileShader(f, opengl.VertexShader)
+		r.cubemapShader.CompileShader(f, VertexShader)
 	}
 
 	if f, err := os.Open("assets/shaders/cubemap/shader.frag"); err == nil {
 		defer f.Close()
-		r.cubemapShader.CompileShader(f, opengl.FragmentShader)
+		r.cubemapShader.CompileShader(f, FragmentShader)
 	}
 
 	r.cubemapShader.Link()
@@ -109,7 +108,7 @@ func (r *Renderer) SetCubemap(path string) {
 		panic(err)
 	}
 
-	r.cubemapMesh.Bind()
+	Bind(r.cubemapMesh)
 
 	if err := r.cubemapShader.Validate(); err != nil {
 		panic(err)
@@ -128,12 +127,12 @@ func (r *Renderer) Clear(view mgl32.Mat4) {
 	ProjMatrix := mgl32.Perspective(mgl32.DegToRad(50.0), 1, 0.1, 200.0)
 	gl.DepthMask(false)
 	r.cubemapShader.Use()
-	r.cubemapShader.SetUniformMatrix4fv(opengl.ProjectionMatrixKey, ProjMatrix)
-	r.cubemapShader.SetUniformMatrix4fv(opengl.ViewMatrixKey, view)
+	r.cubemapShader.SetUniformMatrix4fv(ProjectionMatrixKey, ProjMatrix)
+	r.cubemapShader.SetUniformMatrix4fv(ViewMatrixKey, view)
 	gl.ActiveTexture(gl.TEXTURE_CUBE_MAP)
 	gl.BindTexture(gl.TEXTURE_CUBE_MAP, r.CubeMapTex)
-	r.cubemapMesh.Use(r.cubemapShader.Handle())
-	r.cubemapMesh.Draw()
+	Use(r.cubemapShader.Handle(), r.cubemapMesh)
+	Draw(r.cubemapMesh)
 	gl.DepthMask(true)
 }
 
