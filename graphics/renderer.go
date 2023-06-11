@@ -13,22 +13,24 @@ import (
 )
 
 type Renderer struct {
-	CubeMapTex    uint32
-	CubeMapVao    uint32
-	cubemapShader Program
-	WindowWidth   float32
-	WindowHeight  float32
-	cubemapMesh   *obj.Obj
+	Version                string
+	ShadingLanguageVersion string
+	CubeMapTex             uint32
+	CubeMapVao             uint32
+	cubemapShader          Program
+	WindowWidth            float32
+	WindowHeight           float32
+	cubemapMesh            *obj.Obj
 }
 
 func (r *Renderer) Init() {
 	if err := gl.Init(); err != nil {
 		panic(err)
 	}
-	version := gl.GoStr(gl.GetString(gl.VERSION))
-	fmt.Println("OpenGL version", version)
-	slversion := gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
-	fmt.Println("OpenGL SL version", slversion)
+	r.Version = gl.GoStr(gl.GetString(gl.VERSION))
+	//fmt.Println("OpenGL version", version)
+	r.ShadingLanguageVersion = gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
+	//fmt.Println("OpenGL SL version", slversion)
 
 	// Configure global settings
 	gl.Enable(gl.TEXTURE_2D)
@@ -37,6 +39,8 @@ func (r *Renderer) Init() {
 	gl.FrontFace(gl.CCW)
 	gl.CullFace(gl.BACK)
 	gl.DepthFunc(gl.LESS)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 }
 

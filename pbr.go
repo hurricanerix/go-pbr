@@ -3,16 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/go-gl/glfw/v3.3/glfw"
+	"github.com/go-gl/mathgl/mgl32"
+	"go-pbr/graphics"
+	"go-pbr/obj"
 	"log"
 	"math"
 	"os"
 	"runtime"
-
-	"github.com/go-gl/glfw/v3.3/glfw"
-	"github.com/go-gl/mathgl/mgl32"
-
-	"go-pbr/graphics"
-	"go-pbr/obj"
 )
 
 const windowWidth = 960
@@ -119,7 +117,13 @@ func main() {
 	rotLight = rotLight.Mul(lightDistance)
 	subjectProgram.SetUniform3fv(graphics.LightPosKey, rotLight)
 
+	font, err := graphics.NewFont("assets/fonts/ascii.png", 16, 16, float32(12), windowWidth, windowHeight)
+	if err != nil {
+		panic(err)
+	}
 	for !window.ShouldClose() {
+		processInput(window)
+
 		// Update
 		rotModel := model.Mul4(mgl32.HomogRotate3DY(float32(modelAngle)))
 		rotViewMatrix := viewMatrix.Mul4(mgl32.HomogRotate3DY(float32(cameraAngle)))
@@ -139,6 +143,19 @@ func main() {
 		subjectMaterial.Use()
 		graphics.Draw(subject)
 
+		if showInfo {
+			font.Activate()
+			font.Color(mgl32.Vec3{0.5, 0.8, 0.2})
+			font.RenderText(fmt.Sprintf("OpenGL Version: %s", renderer.Version), 25.0, 41.0, 1.0)
+			font.RenderText(fmt.Sprintf("GLSL Version: %s", renderer.ShadingLanguageVersion), 25.0, 25.0, 1.0)
+
+			font.Color(mgl32.Vec3{0.8, 0.7, 0.2})
+			font.RenderText(fmt.Sprintf("Model Rotation: %.2f", modelAngle), 25.0, windowHeight-25, 0.5)
+			font.RenderText(fmt.Sprintf("Camera Rotation: %.2f", cameraAngle), 25.0, windowHeight-41, 0.5)
+			font.RenderText(fmt.Sprintf("Light Position: %v", rotLight), 25.0, windowHeight-57, 0.5)
+			font.Deactivate()
+		}
+
 		// Maintenance
 		window.SwapBuffers()
 		glfw.PollEvents()
@@ -152,6 +169,18 @@ var previousX float64
 var rotateCube bool
 var rotateCamera bool
 var rotateLight bool
+var showInfo bool
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// ---------------------------------------------------------------------------------------------------------
+func processInput(window *glfw.Window) {
+	if window.GetKey(glfw.KeyEscape) == glfw.Press {
+		window.SetShouldClose(true)
+	}
+	if window.GetKey(glfw.KeyI) == glfw.Press {
+		showInfo = !showInfo
+	}
+}
 
 func mousePosCallback(w *glfw.Window, xpos float64, ypos float64) {
 	previousX = currentX
@@ -216,3 +245,11 @@ func mouseButtonCallback(w *glfw.Window, button glfw.MouseButton, action glfw.Ac
 		rotateCamera = false
 	}
 }
+
+//// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+//// ---------------------------------------------------------------------------------------------
+//func framebufferSizeCallback(w *glfw.Window, width int, height int) {
+//	// make sure the viewport matches the new window dimensions; note that width and
+//	// height will be significantly larger than specified on retina displays.
+//	gl.Viewport(0, 0, int32(width), int32(height))
+//}
