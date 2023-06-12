@@ -27,7 +27,7 @@ var lightAngle = 0.0
 
 func main() {
 	assetPath := flag.String("assets", "assets", "")
-	meshName := flag.String("mesh", "sphere", "")
+	meshName := flag.String("mesh", "sphere_smooth", "")
 	materialName := flag.String("material", "metal_plate", "")
 	shaderName := flag.String("shader", "lgl-pbr", "")
 	skymapName := flag.String("skymap", "lgl", "")
