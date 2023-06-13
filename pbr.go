@@ -100,27 +100,62 @@ func main() {
 	projMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(windowWidth)/windowHeight, 0.1, 20.0)
 	viewMatrix := mgl32.LookAtV(cameraPos, mgl32.Vec3{0, 0, 0}, mgl32.Vec3{0, 1, 0})
 
-	subjectProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
-	subjectProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, viewMatrix)
-	subjectProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, model)
+	var light *obj.Obj
+	if f, err := os.Open(fmt.Sprintf("%s/meshes/light.obj", *assetPath)); err == nil {
+		defer f.Close()
+		light = obj.Load(f)
+		//light.GenNormalRequirements()
+	} else {
+		panic(err)
+	}
+	lightProgram := graphics.Program{}
+	if f, err := os.Open(fmt.Sprintf("%s/shaders/unlit/shader.vert", *assetPath)); err == nil {
+		defer f.Close()
+		lightProgram.CompileShader(f, graphics.VertexShader)
+	}
+	if f, err := os.Open(fmt.Sprintf("%s/shaders/unlit/shader.frag", *assetPath)); err == nil {
+		defer f.Close()
+		lightProgram.CompileShader(f, graphics.FragmentShader)
+	}
 
-	subjectProgram.SetUniform3fv(graphics.ViewPosKey, cameraPos)
-
-	window.SetCursorPosCallback(mousePosCallback)
-	window.SetMouseButtonCallback(mouseButtonCallback)
+	lightProgram.Link()
+	lightProgram.Use() // <- Important to use before loading the material.
+	lightMaterial := graphics.NewMaterial(subjectProgram.Handle(), fmt.Sprintf("%s/materials/debug", *assetPath))
+	lightMaterial.Load()
+	graphics.Bind(light)
+	if err := lightProgram.Validate(); err != nil {
+		panic(err)
+	}
 
 	lightColor := mgl32.Vec3{150, 150, 150}
-	subjectProgram.SetUniform3fv(graphics.LightColorKey, lightColor)
-
-	lightDistance := float32(10)
+	lightDistance := float32(2)
 	rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 	rotLight = rotLight.Mul(lightDistance)
 	subjectProgram.SetUniform3fv(graphics.LightPosKey, rotLight)
+
+	lightModel := mgl32.Ident4()
+	lightModel = mgl32.Translate3D(rotLight.X(), rotLight.Y(), rotLight.Z())
+	lightProgram.Use()
+	lightProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
+	lightProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, viewMatrix)
+	lightProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, lightModel)
+	lightProgram.SetUniform3fv(graphics.ColorKey, lightColor)
+
+	subjectProgram.Use()
+	subjectProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
+	subjectProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, viewMatrix)
+	subjectProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, model)
+	subjectProgram.SetUniform3fv(graphics.ViewPosKey, cameraPos)
+	subjectProgram.SetUniform3fv(graphics.LightColorKey, lightColor)
 
 	font, err := graphics.NewFont("assets/fonts/ascii.png", 16, 16, float32(12), windowWidth, windowHeight)
 	if err != nil {
 		panic(err)
 	}
+
+	window.SetCursorPosCallback(mousePosCallback)
+	window.SetMouseButtonCallback(mouseButtonCallback)
+	fmt.Println(light)
 	for !window.ShouldClose() {
 		processInput(window)
 
@@ -129,19 +164,32 @@ func main() {
 		rotViewMatrix := viewMatrix.Mul4(mgl32.HomogRotate3DY(float32(cameraAngle)))
 		rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 		rotLight = rotLight.Mul(lightDistance)
+		lightModel = mgl32.Translate3D(rotLight.X(), rotLight.Y(), rotLight.Z())
 
 		// Render
 		renderer.Clear(rotViewMatrix)
+
 		subjectProgram.Use()
 		subjectProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
 		subjectProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, rotViewMatrix)
 		subjectProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, rotModel)
 		subjectProgram.SetUniform3fv(graphics.ViewPosKey, cameraPos)
 		subjectProgram.SetUniform3fv(graphics.LightPosKey, rotLight)
-		subjectProgram.SetUniform3fv(graphics.Color, subjectColor)
+		subjectProgram.SetUniform3fv(graphics.ColorKey, subjectColor)
 		graphics.Use(subjectProgram.Handle(), subject)
 		subjectMaterial.Use()
 		graphics.Draw(subject)
+
+		if showLight {
+			lightProgram.Use()
+			lightProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
+			lightProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, rotViewMatrix)
+			lightProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, lightModel)
+			lightProgram.SetUniform3fv(graphics.ColorKey, lightColor)
+			graphics.Use(lightProgram.Handle(), light)
+			lightProgram.Use()
+			graphics.Draw(light)
+		}
 
 		if showInfo {
 			font.Activate()
@@ -170,6 +218,7 @@ var rotateCube bool
 var rotateCamera bool
 var rotateLight bool
 var showInfo bool
+var showLight bool
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -179,6 +228,9 @@ func processInput(window *glfw.Window) {
 	}
 	if window.GetKey(glfw.KeyI) == glfw.Press {
 		showInfo = !showInfo
+	}
+	if window.GetKey(glfw.KeyL) == glfw.Press {
+		showLight = !showLight
 	}
 }
 

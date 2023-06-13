@@ -32,7 +32,7 @@ const (
 	ARMSamplerKey       = "armMap"
 	DispSamplerKey      = "dispMap"
 	NormalSamplerKey    = "normalMap"
-	Color               = "color"
+	ColorKey            = "color"
 )
 
 // Varying Constants
