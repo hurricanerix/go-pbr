@@ -27,7 +27,7 @@ var lightAngle = 0.0
 
 func main() {
 	assetPath := flag.String("assets", "assets", "")
-	meshName := flag.String("mesh", "sphere_smooth", "")
+	meshName := flag.String("mesh", "xyz-cube", "")
 	materialName := flag.String("material", "metal_plate", "")
 	shaderName := flag.String("shader", "lgl-pbr", "")
 	skymapName := flag.String("skymap", "lgl", "")
@@ -127,7 +127,7 @@ func main() {
 		panic(err)
 	}
 
-	lightColor := mgl32.Vec3{150, 150, 150}
+	lightColor := mgl32.Vec3{9.922, 9.843, 8.275}
 	lightDistance := float32(2)
 	rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 	rotLight = rotLight.Mul(lightDistance)
@@ -140,7 +140,7 @@ func main() {
 	lightProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, viewMatrix)
 	lightProgram.SetUniformMatrix4fv(graphics.ModelMatrixKey, lightModel)
 	lightProgram.SetUniform3fv(graphics.ColorKey, lightColor)
-
+	lightProgram.SetUniform1i("noMap", 1)
 	subjectProgram.Use()
 	subjectProgram.SetUniformMatrix4fv(graphics.ProjectionMatrixKey, projMatrix)
 	subjectProgram.SetUniformMatrix4fv(graphics.ViewMatrixKey, viewMatrix)
@@ -156,8 +156,25 @@ func main() {
 	window.SetCursorPosCallback(mousePosCallback)
 	window.SetMouseButtonCallback(mouseButtonCallback)
 	fmt.Println(light)
+
+	currentTimer := 0
+	timerResolution := 1000
+	timers := map[string][]float64{
+		"start":           make([]float64, timerResolution),
+		"endProcessInput": make([]float64, timerResolution),
+		"endUpdate":       make([]float64, timerResolution),
+		"endRender":       make([]float64, timerResolution),
+		"endShowLight":    make([]float64, timerResolution),
+		"endShowInfo":     make([]float64, timerResolution),
+		"endSwap":         make([]float64, timerResolution),
+		"endPoll":         make([]float64, timerResolution),
+		"end":             make([]float64, timerResolution),
+	}
+
 	for !window.ShouldClose() {
+		timers["start"][currentTimer] = glfw.GetTime()
 		processInput(window)
+		timers["endProcessInput"][currentTimer] = glfw.GetTime()
 
 		// Update
 		rotModel := model.Mul4(mgl32.HomogRotate3DY(float32(modelAngle)))
@@ -165,6 +182,7 @@ func main() {
 		rotLight := mgl32.Vec3{float32(math.Cos(lightAngle)), 0, float32(math.Sin(lightAngle))}
 		rotLight = rotLight.Mul(lightDistance)
 		lightModel = mgl32.Translate3D(rotLight.X(), rotLight.Y(), rotLight.Z())
+		timers["endUpdate"][currentTimer] = glfw.GetTime()
 
 		// Render
 		renderer.Clear(rotViewMatrix)
@@ -179,6 +197,7 @@ func main() {
 		graphics.Use(subjectProgram.Handle(), subject)
 		subjectMaterial.Use()
 		graphics.Draw(subject)
+		timers["endRender"][currentTimer] = glfw.GetTime()
 
 		if showLight {
 			lightProgram.Use()
@@ -190,6 +209,7 @@ func main() {
 			lightProgram.Use()
 			graphics.Draw(light)
 		}
+		timers["endShowLight"][currentTimer] = glfw.GetTime()
 
 		if showInfo {
 			font.Activate()
@@ -201,15 +221,88 @@ func main() {
 			font.RenderText(fmt.Sprintf("Model Rotation: %.2f", modelAngle), 25.0, windowHeight-25, 0.5)
 			font.RenderText(fmt.Sprintf("Camera Rotation: %.2f", cameraAngle), 25.0, windowHeight-41, 0.5)
 			font.RenderText(fmt.Sprintf("Light Position: %v", rotLight), 25.0, windowHeight-57, 0.5)
+			font.RenderText(fmt.Sprintf("Mesh: %s", *meshName), 25.0, windowHeight-73, 0.5)
+			font.RenderText(fmt.Sprintf("Material: %s", *materialName), 25.0, windowHeight-89, 0.5)
+			font.RenderText(fmt.Sprintf("Shader: %s", *shaderName), 25.0, windowHeight-105, 0.5)
 			font.Deactivate()
 		}
+		timers["endShowInfo"][currentTimer] = glfw.GetTime()
 
 		// Maintenance
 		window.SwapBuffers()
+		timers["endSwap"][currentTimer] = glfw.GetTime()
 		glfw.PollEvents()
+		timers["endPoll"][currentTimer] = glfw.GetTime()
+
+		timers["end"][currentTimer] = glfw.GetTime()
+		currentTimer += 1
+		if currentTimer >= timerResolution {
+			currentTimer = 0
+			//window.SetShouldClose(true)
+		}
 	}
 
+	processTimers(timers)
+
 	subjectProgram.Destroy()
+}
+
+func processTimers(t map[string][]float64) {
+	max := map[string]float64{
+		"start":           0.0,
+		"endProcessInput": 0.0,
+		"endUpdate":       0.0,
+		"endRender":       0.0,
+		"endShowLight":    0.0,
+		"endShowInfo":     0.0,
+		"endSwap":         0.0,
+		"endPoll":         0.0,
+		"end":             0.0,
+	}
+	min := map[string]float64{
+		"start":           999999.0,
+		"endProcessInput": 999999.0,
+		"endUpdate":       999999.0,
+		"endRender":       999999.0,
+		"endShowLight":    999999.0,
+		"endShowInfo":     999999.0,
+		"endSwap":         999999.0,
+		"endPoll":         999999.0,
+		"end":             999999.0,
+	}
+	avg := map[string]float64{
+		"start":           0.0,
+		"endProcessInput": 0.0,
+		"endUpdate":       0.0,
+		"endRender":       0.0,
+		"endShowLight":    0.0,
+		"endShowInfo":     0.0,
+		"endSwap":         0.0,
+		"endPoll":         0.0,
+		"end":             0.0,
+	}
+
+	for _, k := range []string{"endProcessInput", "endUpdate", "endRender", "endShowLight", "endShowInfo", "endSwap", "endPoll", "end"} {
+		v := t[k]
+		for i := range v {
+			d := t[k][i] - t["start"][i]
+			if d > max[k] {
+				max[k] = d
+			}
+			if d < min[k] {
+				min[k] = d
+			}
+			avg[k] += d
+		}
+	}
+
+	for _, k := range []string{"start", "endProcessInput", "endUpdate", "endRender", "endShowLight", "endShowInfo", "endSwap", "endPoll", "end"} {
+		fmt.Printf("%s\n", k)
+		fmt.Printf("\tMin: %f\n", min[k])
+		fmt.Printf("\tAvg: %f\n", avg[k]/float64(len(t["start"])))
+		fmt.Printf("\tMax: %f\n", max[k])
+	}
+
 }
 
 var currentX float64
@@ -217,8 +310,11 @@ var previousX float64
 var rotateCube bool
 var rotateCamera bool
 var rotateLight bool
-var showInfo bool
-var showLight bool
+
+// var showInfo bool
+// var showLight bool
+var showLight = true
+var showInfo = false
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------

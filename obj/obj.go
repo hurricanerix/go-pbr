@@ -11,8 +11,6 @@ import (
 	"strings"
 )
 
-// TODO: Abstract all the GL calls out of the Obj class.
-
 type Obj struct {
 	Vao        uint32
 	Vbo        uint32

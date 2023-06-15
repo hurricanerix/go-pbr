@@ -155,6 +155,8 @@ func (f *RasterFont) Activate() {
 	gl.BindTexture(gl.TEXTURE_2D, f.textureID)
 	//gl.ClearColor(0.2, 0.3, 0.3, 1.0)
 	//gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	//// update content of VBO memory
+	gl.BindBuffer(gl.ARRAY_BUFFER, f.vbo)
 }
 
 func (f *RasterFont) Color(c mgl32.Vec3) {
@@ -189,11 +191,8 @@ func (f *RasterFont) RenderText(text string, x, y, scale float32) {
 			xpos + w, ypos + h, uvs[1].X(), uvs[1].Y(),
 		}
 
-		//// update content of VBO memory
-		gl.BindBuffer(gl.ARRAY_BUFFER, f.vbo)
 		// TODO: SIZE WAS WRONG
 		gl.BufferSubData(gl.ARRAY_BUFFER, 0, 4*6*4, gl.Ptr(vertices)) // be sure to use glBufferSubData and not glBufferData
-		gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 
 		//render quad
 		gl.DrawArrays(gl.TRIANGLES, 0, 6)
@@ -205,6 +204,7 @@ func (f *RasterFont) RenderText(text string, x, y, scale float32) {
 }
 
 func (f RasterFont) Deactivate() {
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	gl.BindVertexArray(0)
 	gl.BindTexture(gl.TEXTURE_2D, 0)
 	gl.DepthMask(true)

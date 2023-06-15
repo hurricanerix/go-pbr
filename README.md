@@ -4,9 +4,7 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
 
 ## TODO
 
-- [ ] Fix Smooth Meshes
 - [ ] Triangulate Quads (OBJ)
-- [ ] Render Fonts
 - [ ] Emission
 - [ ] Framebuffer
 - [ ] Environment Mapping (Reflection)
@@ -14,4 +12,8 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
 - [ ] HDR
 - [ ] Bloom
 - [ ] Deferred Shading
-- [X] PBR
+
+## Dev
+
+* https://www.khronos.org/opengl/wiki/Platform_specifics:_Windows#Installing_Mesa3D_on_Windows
+* https://www.glfw.org
