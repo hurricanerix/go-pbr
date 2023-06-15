@@ -18,7 +18,19 @@ A prototype tool leveraging Golang and OpenGL for viewing PBR materials.
 * https://www.khronos.org/opengl/wiki/Platform_specifics:_Windows#Installing_Mesa3D_on_Windows
 * https://www.glfw.org
 
+### macOS
 
+brew install mesa
+brew install glfw
+
+### Windows 11
+
+* https://www.khronos.org/opengl/wiki/Platform_specifics:_Windows#Installing_Mesa3D_on_Windows
+* https://www.glfw.org
+
+### Linux
+
+pacman -S mesa glfw
 
 ### Benchmarks
 
@@ -124,4 +136,166 @@ end
         Max: 0.022762
 
 Process finished with the exit code 0
+```
+
+
+
+-----
+
+no info
+```
+GOROOT=/Users/rhawkins/bin/go1.20.4 #gosetup
+GOPATH=/Users/rhawkins/bin/go #gosetup
+/Users/rhawkins/bin/go1.20.4/bin/go build -o /Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer . #gosetup
+/Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer
+%!v(PANIC=String method: runtime error: index out of range [23040] with length 23040)
+start
+        Min: 999999.000000
+        Avg: 0.000000
+        Max: 0.000000
+endProcessInput
+        Min: 0.000000
+        Avg: 0.000003
+        Max: 0.000099
+endUpdate
+        Min: 0.000001
+        Avg: 0.000006
+        Max: 0.000103
+endRender
+        Min: 0.000041
+        Avg: 0.000178
+        Max: 0.001328
+endShowLight
+        Min: 0.000046
+        Avg: 0.000200
+        Max: 0.001420
+endShowInfo
+        Min: 0.000046
+        Avg: 0.000201
+        Max: 0.001420
+endSwap
+        Min: 0.000400
+        Avg: 0.008191
+        Max: 0.016720
+endPoll
+        Min: 0.000622
+        Avg: 0.008455
+        Max: 0.049624
+end
+        Min: 0.000622
+        Avg: 0.008455
+        Max: 0.049625
+
+Process finished with the exit code 0
+
+
+
+```
+
+
+Info
+```
+GOROOT=/Users/rhawkins/bin/go1.20.4 #gosetup
+GOPATH=/Users/rhawkins/bin/go #gosetup
+/Users/rhawkins/bin/go1.20.4/bin/go build -o /Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer . #gosetup
+/Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer
+%!v(PANIC=String method: runtime error: index out of range [23040] with length 23040)
+start
+Min: 999999.000000
+Avg: 0.000000
+Max: 0.000000
+endProcessInput
+Min: 0.000000
+Avg: 0.000001
+Max: 0.000046
+endUpdate
+Min: 0.000001
+Avg: 0.000003
+Max: 0.000048
+endRender
+Min: 0.000031
+Avg: 0.000060
+Max: 0.000383
+endShowLight
+Min: 0.000037
+Avg: 0.000071
+Max: 0.000466
+endShowInfo
+Min: 0.034618
+Avg: 0.055476
+Max: 0.064545
+endSwap
+Min: 0.035039
+Avg: 0.056032
+Max: 0.066686
+endPoll
+Min: 0.035178
+Avg: 0.056178
+Max: 0.100311
+end
+Min: 0.035178
+Avg: 0.056178
+Max: 0.100312
+
+Process finished with the exit code 0
+
+
+```
+
+GOROOT=/Users/rhawkins/bin/go1.20.4 #gosetup
+GOPATH=/Users/rhawkins/bin/go #gosetup
+/Users/rhawkins/bin/go1.20.4/bin/go build -o /Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer . #gosetup
+/Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer
+%!v(PANIC=String method: runtime error: index out of range [23040] with length 23040)
+
+Process finished with the exit code 0
+
+
+```
+GOROOT=/Users/rhawkins/bin/go1.20.4 #gosetup
+GOPATH=/Users/rhawkins/bin/go #gosetup
+/Users/rhawkins/bin/go1.20.4/bin/go build -o /Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer . #gosetup
+/Users/rhawkins/Library/Caches/JetBrains/GoLand2023.1/tmp/GoLand/___pbr_viewer
+%!v(PANIC=String method: runtime error: index out of range [23040] with length 23040)
+start
+        Min: 999999.000000
+        Avg: 0.000000
+        Max: 0.000000
+endProcessInput
+        Min: 0.000000
+        Avg: 0.000001
+        Max: 0.000046
+endUpdate
+        Min: 0.000001
+        Avg: 0.000003
+        Max: 0.000048
+endRender
+        Min: 0.000031
+        Avg: 0.000060
+        Max: 0.000383
+endShowLight
+        Min: 0.000037
+        Avg: 0.000071
+        Max: 0.000466
+endShowInfo
+        Min: 0.034618
+        Avg: 0.055476
+        Max: 0.064545
+endSwap
+        Min: 0.035039
+        Avg: 0.056032
+        Max: 0.066686
+endPoll
+        Min: 0.035178
+        Avg: 0.056178
+        Max: 0.100311
+end
+        Min: 0.035178
+        Avg: 0.056178
+        Max: 0.100312
+
+Process finished with the exit code 0
+
+
+
 ```

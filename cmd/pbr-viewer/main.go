@@ -314,7 +314,7 @@ var rotateLight bool
 // var showInfo bool
 // var showLight bool
 var showLight = true
-var showInfo = false
+var showInfo = true
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
